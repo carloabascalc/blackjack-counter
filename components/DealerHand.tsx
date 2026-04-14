@@ -1,6 +1,6 @@
 'use client';
 
-import { Player, CardRank } from '@/lib/types';
+import { Player } from '@/lib/types';
 import { calcHandValue } from '@/lib/cardCounting';
 import CardChip from './CardChip';
 
@@ -11,9 +11,11 @@ interface DealerHandProps {
 }
 
 export default function DealerHand({ dealer, isActive, onSelect }: DealerHandProps) {
-  const { total, isBust } = calcHandValue(dealer.cards);
-  const hasCards = dealer.cards.length > 0;
-  const upCard: CardRank | null = dealer.cards[0]?.rank ?? null;
+  const hand = dealer.hands[0];
+  const cards = hand?.cards ?? [];
+  const { total, isBust } = calcHandValue(cards);
+  const hasCards = cards.length > 0;
+  const upCard = cards[0]?.rank ?? null;
 
   return (
     <div
@@ -37,7 +39,7 @@ export default function DealerHand({ dealer, isActive, onSelect }: DealerHandPro
       </div>
 
       <div className="flex flex-wrap gap-2 min-h-[4rem]">
-        {dealer.cards.map((card, i) => (
+        {cards.map((card, i) => (
           <CardChip key={i} card={card} />
         ))}
         {!hasCards && (

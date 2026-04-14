@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { GameState, CardRank, Card } from '@/lib/types';
+import { GameState, CardRank, Card, Hand, Player } from '@/lib/types';
 import { getHiLoValue, calcTrueCount, calcRemainingCards } from '@/lib/cardCounting';
+import { isPair } from '@/lib/cardCounting';
 import CountDisplay from './CountDisplay';
 import DealerHand from './DealerHand';
 import PlayerHand from './PlayerHand';
@@ -17,15 +18,34 @@ interface HistoryEntry {
   state: GameState;
 }
 
+let _handIdCounter = 200;
+function newHandId() { return `hand-${++_handIdCounter}`; }
+let _playerIdCounter = 200;
+
+function cloneHand(h: Hand): Hand {
+  return { ...h, cards: [...h.cards] };
+}
+
+function clonePlayer(p: Player): Player {
+  return { ...p, hands: p.hands.map(cloneHand) };
+}
+
 function cloneState(state: GameState): GameState {
   return {
     ...state,
-    players: state.players.map(p => ({ ...p, cards: [...p.cards] })),
-    dealer: { ...state.dealer, cards: [...state.dealer.cards] },
+    players: state.players.map(clonePlayer),
+    dealer: clonePlayer(state.dealer),
   };
 }
 
-let playerIdCounter = 100;
+function getActiveLabel(state: GameState): string {
+  if (state.activePlayerId === 'dealer') return 'Dealer';
+  const player = state.players.find(p => p.id === state.activePlayerId);
+  if (!player) return '?';
+  if (player.hands.length === 1) return player.name;
+  const handIdx = player.hands.findIndex(h => h.id === state.activeHandId);
+  return `${player.name} — Hand ${handIdx + 1}`;
+}
 
 export default function GameBoard({ initialState, onReset }: GameBoardProps) {
   const [state, setState] = useState<GameState>(cloneState(initialState));
@@ -33,11 +53,7 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
 
   const remaining = calcRemainingCards(state.totalCards, state.cardsDealt);
   const trueCount = calcTrueCount(state.runningCount, remaining);
-  const dealerUpCard: CardRank | null = state.dealer.cards[0]?.rank ?? null;
-
-  const activePlayer = state.activePlayerId === 'dealer'
-    ? state.dealer
-    : state.players.find(p => p.id === state.activePlayerId) ?? state.players[0];
+  const dealerUpCard: CardRank | null = state.dealer.hands[0]?.cards[0]?.rank ?? null;
 
   function pushHistory(s: GameState) {
     setHistory(h => [...h.slice(-49), { state: cloneState(s) }]);
@@ -48,17 +64,40 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
       pushHistory(prev);
       const next = cloneState(prev);
       const card: Card = { rank };
-      const hiloVal = getHiLoValue(card);
 
       if (next.activePlayerId === 'dealer') {
-        next.dealer.cards.push(card);
+        next.dealer.hands[0].cards.push(card);
       } else {
-        const p = next.players.find(p => p.id === next.activePlayerId);
-        if (p) p.cards.push(card);
+        const player = next.players.find(p => p.id === next.activePlayerId);
+        if (player) {
+          const hand = player.hands.find(h => h.id === next.activeHandId) ?? player.hands[0];
+          if (hand) hand.cards.push(card);
+        }
       }
 
-      next.runningCount += hiloVal;
+      next.runningCount += getHiLoValue(card);
       next.cardsDealt += 1;
+      return next;
+    });
+  }
+
+  function splitHand(playerId: string, handId: string) {
+    setState(prev => {
+      const player = prev.players.find(p => p.id === playerId);
+      const hand = player?.hands.find(h => h.id === handId);
+      if (!hand || hand.cards.length !== 2 || !isPair(hand.cards)) return prev;
+
+      pushHistory(prev);
+      const next = cloneState(prev);
+      const nextPlayer = next.players.find(p => p.id === playerId)!;
+      const handIdx = nextPlayer.hands.findIndex(h => h.id === handId);
+
+      const hand1: Hand = { id: newHandId(), cards: [hand.cards[0]] };
+      const hand2: Hand = { id: newHandId(), cards: [hand.cards[1]] };
+
+      nextPlayer.hands.splice(handIdx, 1, hand1, hand2);
+      next.activePlayerId = playerId;
+      next.activeHandId = hand1.id;
       return next;
     });
   }
@@ -73,9 +112,14 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
   function newRound() {
     setState(prev => {
       const next = cloneState(prev);
-      next.dealer = { ...next.dealer, cards: [] };
-      next.players = next.players.map(p => ({ ...p, cards: [] }));
-      // keep running count — same shoe
+      next.dealer.hands = [{ id: newHandId(), cards: [] }];
+      next.players = next.players.map(p => ({
+        ...p,
+        hands: [{ id: newHandId(), cards: [] }],
+      }));
+      const firstPlayer = next.players[0];
+      next.activePlayerId = firstPlayer?.id ?? 'dealer';
+      next.activeHandId = firstPlayer?.hands[0]?.id ?? next.dealer.hands[0].id;
       return next;
     });
     setHistory([]);
@@ -86,8 +130,14 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
       const next = cloneState(prev);
       next.runningCount = 0;
       next.cardsDealt = 0;
-      next.dealer = { ...next.dealer, cards: [] };
-      next.players = next.players.map(p => ({ ...p, cards: [] }));
+      next.dealer.hands = [{ id: newHandId(), cards: [] }];
+      next.players = next.players.map(p => ({
+        ...p,
+        hands: [{ id: newHandId(), cards: [] }],
+      }));
+      const firstPlayer = next.players[0];
+      next.activePlayerId = firstPlayer?.id ?? 'dealer';
+      next.activeHandId = firstPlayer?.hands[0]?.id ?? next.dealer.hands[0].id;
       return next;
     });
     setHistory([]);
@@ -97,8 +147,9 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
     if (state.players.length >= 7) return;
     setState(prev => {
       const next = cloneState(prev);
-      const id = `player-${++playerIdCounter}`;
-      next.players.push({ id, name: `P${next.players.length + 1}`, cards: [] });
+      const id = `player-${++_playerIdCounter}`;
+      const hand = { id: newHandId(), cards: [] };
+      next.players.push({ id, name: `P${next.players.length + 1}`, isYou: false, hands: [hand] });
       return next;
     });
   }
@@ -107,23 +158,43 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
     setState(prev => {
       const next = cloneState(prev);
       next.players = next.players.filter(p => p.id !== id);
-      // Renumber
       next.players.forEach((p, i) => { p.name = `P${i + 1}`; });
-      // If removed active, fall back to first player
       if (next.activePlayerId === id) {
-        next.activePlayerId = next.players[0]?.id ?? 'dealer';
+        const first = next.players[0];
+        next.activePlayerId = first?.id ?? 'dealer';
+        next.activeHandId = first?.hands[0]?.id ?? next.dealer.hands[0].id;
+      }
+      // If removed player was "you", unmark (fallback to no one)
+      if (next.youPlayerId === id) {
+        next.youPlayerId = '';
       }
       return next;
     });
   }
 
-  function setActive(id: string) {
-    setState(prev => ({ ...prev, activePlayerId: id }));
+  function setYou(playerId: string) {
+    setState(prev => ({ ...prev, youPlayerId: playerId }));
+  }
+
+  function setActive(playerId: string, handId?: string) {
+    setState(prev => {
+      if (playerId === 'dealer') {
+        return { ...prev, activePlayerId: 'dealer', activeHandId: prev.dealer.hands[0]?.id ?? '' };
+      }
+      const player = prev.players.find(p => p.id === playerId);
+      const targetHand = handId
+        ? player?.hands.find(h => h.id === handId)
+        : player?.hands[0];
+      return {
+        ...prev,
+        activePlayerId: playerId,
+        activeHandId: targetHand?.id ?? prev.activeHandId,
+      };
+    });
   }
 
   return (
     <div className="min-h-screen bg-green-950 flex flex-col">
-      {/* Top count bar */}
       <CountDisplay
         runningCount={state.runningCount}
         cardsDealt={state.cardsDealt}
@@ -143,14 +214,14 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
             onClick={shuffleDeck}
             className="px-3 py-1.5 bg-orange-700 hover:bg-orange-600 text-white text-sm rounded-lg font-medium transition-colors"
           >
-            🔀 Shuffle Deck
+            🔀 Shuffle
           </button>
           <button
             onClick={addPlayer}
             disabled={state.players.length >= 7}
             className="px-3 py-1.5 bg-green-700 hover:bg-green-600 text-white text-sm rounded-lg font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            + Add Player
+            + Player
           </button>
           <div className="ml-auto flex items-center gap-2">
             <span className="text-green-500 text-xs">{state.numDecks} deck{state.numDecks > 1 ? 's' : ''}</span>
@@ -167,42 +238,41 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
       {/* Main play area */}
       <div className="flex-1 overflow-auto p-4">
         <div className="max-w-4xl mx-auto space-y-4">
-          {/* Dealer */}
           <DealerHand
             dealer={state.dealer}
             isActive={state.activePlayerId === 'dealer'}
             onSelect={() => setActive('dealer')}
           />
 
-          {/* Players grid */}
           <div className={`grid gap-3 ${
             state.players.length === 1 ? 'grid-cols-1' :
-            state.players.length <= 2 ? 'grid-cols-2' :
             state.players.length <= 4 ? 'grid-cols-2' :
             'grid-cols-3'
           }`}>
-            {state.players.map((player, i) => (
+            {state.players.map(player => (
               <PlayerHand
                 key={player.id}
                 player={player}
                 dealerUpCard={dealerUpCard}
                 trueCount={trueCount}
                 isActive={state.activePlayerId === player.id}
-                isYou={i === 0}
-                onSelect={() => setActive(player.id)}
+                activeHandId={state.activePlayerId === player.id ? state.activeHandId : null}
+                isYou={player.id === state.youPlayerId}
+                onSelectHand={(handId) => setActive(player.id, handId)}
                 onRemove={() => removePlayer(player.id)}
+                onSplit={(handId) => splitHand(player.id, handId)}
+                onSetYou={() => setYou(player.id)}
               />
             ))}
           </div>
         </div>
       </div>
 
-      {/* Card input panel — fixed bottom */}
       <CardInputPanel
         onCardSelect={addCard}
         onUndo={undo}
         canUndo={history.length > 0}
-        activePlayerName={activePlayer?.name ?? 'Dealer'}
+        activeLabel={getActiveLabel(state)}
       />
     </div>
   );

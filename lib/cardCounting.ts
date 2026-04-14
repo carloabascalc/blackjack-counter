@@ -22,12 +22,25 @@ export function calcRemainingCards(totalCards: number, cardsDealt: number): numb
   return Math.max(0, totalCards - cardsDealt);
 }
 
-// Bet advice based on true count (Kelly-informed Hi-Lo bet spread)
-export function getBetAdvice(trueCount: number): { label: string; multiplier: string; color: string } {
-  if (trueCount <= 1)  return { label: 'MIN BET',  multiplier: '1x', color: 'text-gray-400' };
-  if (trueCount <= 2)  return { label: 'RAISE',     multiplier: '2x', color: 'text-yellow-400' };
-  if (trueCount <= 4)  return { label: 'HIGH BET',  multiplier: '4x', color: 'text-orange-400' };
-  return               { label: 'MAX BET',           multiplier: '8x', color: 'text-green-400' };
+// Bet advice based on true count.
+// Player edge formula (6-deck S17): edge ≈ trueCount × 0.5% − 0.55%
+// Bet spread 1–8 units using standard Hi-Lo indexing.
+export function getBetAdvice(trueCount: number): {
+  label: string;
+  units: string;
+  edge: string;
+  color: string;
+  bgColor: string;
+} {
+  const edgePct = trueCount * 0.5 - 0.55;
+  const edgeStr = (edgePct >= 0 ? '+' : '') + edgePct.toFixed(2) + '%';
+
+  if (trueCount < 1)  return { label: 'SIT OUT / MIN', units: '1×', edge: edgeStr, color: 'text-red-400',    bgColor: 'bg-red-950/60' };
+  if (trueCount < 2)  return { label: 'TABLE MIN',     units: '1×', edge: edgeStr, color: 'text-gray-400',   bgColor: 'bg-gray-800/60' };
+  if (trueCount < 3)  return { label: 'RAISE BET',     units: '2×', edge: edgeStr, color: 'text-yellow-400', bgColor: 'bg-yellow-950/60' };
+  if (trueCount < 4)  return { label: 'HIGH BET',      units: '4×', edge: edgeStr, color: 'text-orange-400', bgColor: 'bg-orange-950/60' };
+  if (trueCount < 5)  return { label: 'BIGGER BET',    units: '6×', edge: edgeStr, color: 'text-orange-300', bgColor: 'bg-orange-950/70' };
+  return                     { label: 'MAX BET',        units: '8×', edge: edgeStr, color: 'text-green-400',  bgColor: 'bg-green-950/80' };
 }
 
 export function getCountColor(trueCount: number): string {

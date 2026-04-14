@@ -7,7 +7,7 @@ interface CardInputPanelProps {
   onCardSelect: (rank: CardRank) => void;
   onUndo: () => void;
   canUndo: boolean;
-  activePlayerName: string;
+  activeLabel: string;
 }
 
 const RANKS: CardRank[] = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
@@ -32,14 +32,14 @@ export default function CardInputPanel({
   onCardSelect,
   onUndo,
   canUndo,
-  activePlayerName,
+  activeLabel,
 }: CardInputPanelProps) {
   return (
     <div className="bg-green-900 border-t border-green-700 p-4">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-3">
           <span className="text-green-400 text-sm">
-            Assigning card to: <span className="text-yellow-400 font-bold">{activePlayerName}</span>
+            Assigning to: <span className="text-yellow-400 font-bold">{activeLabel}</span>
           </span>
           <button
             onClick={onUndo}
