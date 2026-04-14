@@ -11,7 +11,6 @@ function pairCardValue(rank: CardRank): number {
 }
 
 // H17 strategy deviations — applies when dealer hits soft 17.
-// Only covers situations where H17 changes the correct play vs S17.
 function getH17Deviation(playerTotal: number, isSoft: boolean, dealerUpCard: CardRank): Action | null {
   // Hard 11 vs A → Double (S17 basic: Hit; index play covers TC >= 1, this fills TC < 1)
   if (playerTotal === 11 && !isSoft && dealerUpCard === 'A') return 'DOUBLE';
@@ -35,14 +34,9 @@ export function getRecommendation(
   const pair = isPair(playerCards);
   const pairValue = pair ? pairCardValue(playerCards[0].rank) : 0;
 
-  const noSurrender = rules?.surrender === 'none';
-
   // 1. Index plays — TC-based deviations, highest priority
   const deviation = getIndexPlayDeviation(total, isSoft, pair, dealerUpCard, trueCount);
-  if (deviation) {
-    if (deviation === 'SURRENDER' && noSurrender) return 'HIT';
-    return deviation;
-  }
+  if (deviation) return deviation;
 
   // 2. H17 deviations — rule-based corrections when dealer hits soft 17
   if (rules?.soft17 === 'H17') {
@@ -55,9 +49,5 @@ export function getRecommendation(
   if (compDeviation) return compDeviation;
 
   // 4. Basic strategy fallback
-  const action = getBasicStrategyAction(total, isSoft, pair, pairValue, dealerUpCard);
-
-  // If surrender is not allowed at this table, fall back to hit
-  if (action === 'SURRENDER' && rules?.surrender === 'none') return 'HIT';
-  return action;
+  return getBasicStrategyAction(total, isSoft, pair, pairValue, dealerUpCard);
 }

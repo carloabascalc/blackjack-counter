@@ -30,8 +30,6 @@ export function calcBaselineEdge(rules: RuleSet): number {
   if (rules.soft17 === 'H17') edge -= 0.22;
   if (rules.das) edge += 0.14;
   if (rules.rsa) edge += 0.08;
-  if (rules.surrender === 'late') edge += 0.07;
-  if (rules.surrender === 'early') edge += 0.62;
   return edge;
 }
 

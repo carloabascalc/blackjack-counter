@@ -21,7 +21,6 @@ export interface RuleSet {
   soft17: 'S17' | 'H17';
   das: boolean;
   rsa: boolean;
-  surrender: 'none' | 'late' | 'early';
   tableMin: number;
   tableMax: number;
 }
@@ -45,4 +44,4 @@ export interface GameState {
   kellyConfig: KellyConfig;
 }
 
-export type Action = 'HIT' | 'STAND' | 'DOUBLE' | 'SPLIT' | 'SURRENDER' | 'INSURANCE' | '-';
+export type Action = 'HIT' | 'STAND' | 'DOUBLE' | 'SPLIT' | 'INSURANCE' | '-';

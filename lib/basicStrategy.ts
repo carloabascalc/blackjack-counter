@@ -9,10 +9,10 @@ function dealerIndex(rank: CardRank): DealerIdx {
   return (parseInt(rank) - 2) as DealerIdx;
 }
 
-type S = 'H' | 'S' | 'D' | 'P' | 'R'; // shorthand: Hit, Stand, Double, sPlit, suRrender
+type S = 'H' | 'S' | 'D' | 'P'; // shorthand: Hit, Stand, Double, sPlit
 
 const S_TO_ACTION: Record<S, Action> = {
-  H: 'HIT', S: 'STAND', D: 'DOUBLE', P: 'SPLIT', R: 'SURRENDER',
+  H: 'HIT', S: 'STAND', D: 'DOUBLE', P: 'SPLIT',
 };
 
 // Hard totals 5–21 vs dealer 2–A
@@ -27,8 +27,8 @@ const HARD: Record<number, S[]> = {
   12: ['H','H','S','S','S','H','H','H','H','H'],
   13: ['S','S','S','S','S','H','H','H','H','H'],
   14: ['S','S','S','S','S','H','H','H','H','H'],
-  15: ['S','S','S','S','S','H','H','H','R','H'],
-  16: ['S','S','S','S','S','H','H','R','R','R'],
+  15: ['S','S','S','S','S','H','H','H','H','H'],
+  16: ['S','S','S','S','S','H','H','H','H','H'],
   17: ['S','S','S','S','S','S','S','S','S','S'],
   18: ['S','S','S','S','S','S','S','S','S','S'],
   19: ['S','S','S','S','S','S','S','S','S','S'],

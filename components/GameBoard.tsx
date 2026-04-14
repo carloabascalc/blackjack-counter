@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import { GameState, CardRank, Card, Hand, Player } from '@/lib/types';
-import { getHiLoValue, calcTrueCount, calcRemainingCards, getKellyBet } from '@/lib/cardCounting';
+import { getHiLoValue, calcTrueCount, calcRemainingCards, getKellyBet, calcBaselineEdge } from '@/lib/cardCounting';
 import { isPair } from '@/lib/cardCounting';
 import CountDisplay from './CountDisplay';
 import DealerHand from './DealerHand';
 import PlayerHand from './PlayerHand';
 import CardInputPanel from './CardInputPanel';
 import CardDrawer from './CardDrawer';
+import StatsPanel from './StatsPanel';
 
 interface GameBoardProps {
   initialState: GameState;
@@ -17,6 +18,15 @@ interface GameBoardProps {
 
 interface HistoryEntry {
   state: GameState;
+}
+
+interface SessionStats {
+  hands: number;
+  wins: number;
+  losses: number;
+  pushes: number;
+  bjs: number;
+  expectedEV: number;
 }
 
 let _handIdCounter = 200;
@@ -53,14 +63,33 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [balance, setBalance] = useState(initialState.kellyConfig.bankroll);
   const [shuffleSignal, setShuffleSignal] = useState(0);
+  const [casinoMode, setCasinoMode] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+  const [sessionStats, setSessionStats] = useState<SessionStats>({
+    hands: 0, wins: 0, losses: 0, pushes: 0, bjs: 0, expectedEV: 0,
+  });
 
   const remaining = calcRemainingCards(state.totalCards, state.cardsDealt);
-  const trueCount = calcTrueCount(state.runningCount, remaining);
+  const trueCount = casinoMode ? 0 : calcTrueCount(state.runningCount, remaining);
   const dealerUpCard: CardRank | null = state.dealer.hands[0]?.cards[0]?.rank ?? null;
-  const kellyBet = getKellyBet(trueCount, state.ruleSet, state.kellyConfig);
+  const kellyBet = casinoMode
+    ? state.ruleSet.tableMin
+    : getKellyBet(trueCount, state.ruleSet, state.kellyConfig);
 
-  function recordResult(multiplier: number) {
+  function recordResult(multiplier: number, type: 'win' | 'loss' | 'push' | 'bj') {
+    const baseEdge = calcBaselineEdge(state.ruleSet);
+    const edgePct = (trueCount * 0.5 + baseEdge) / 100;
+    const ev = kellyBet * edgePct;
+
     setBalance(b => Math.round((b + kellyBet * multiplier) * 100) / 100);
+    setSessionStats(s => ({
+      hands: s.hands + 1,
+      wins: s.wins + (type === 'win' ? 1 : 0),
+      losses: s.losses + (type === 'loss' ? 1 : 0),
+      pushes: s.pushes + (type === 'push' ? 1 : 0),
+      bjs: s.bjs + (type === 'bj' ? 1 : 0),
+      expectedEV: Math.round((s.expectedEV + ev) * 100) / 100,
+    }));
   }
 
   function pushHistory(s: GameState) {
@@ -68,6 +97,7 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
   }
 
   function addCard(rank: CardRank) {
+    if (casinoMode) return; // no tracking in casino mode
     setState(prev => {
       pushHistory(prev);
       const next = cloneState(prev);
@@ -173,10 +203,7 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
         next.activePlayerId = first?.id ?? 'dealer';
         next.activeHandId = first?.hands[0]?.id ?? next.dealer.hands[0].id;
       }
-      // If removed player was "you", unmark (fallback to no one)
-      if (next.youPlayerId === id) {
-        next.youPlayerId = '';
-      }
+      if (next.youPlayerId === id) next.youPlayerId = '';
       return next;
     });
   }
@@ -202,6 +229,8 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
     });
   }
 
+  const pnl = balance - initialState.kellyConfig.bankroll;
+
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col">
       <CountDisplay
@@ -210,78 +239,66 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
         totalCards={state.totalCards}
         ruleSet={state.ruleSet}
         kellyConfig={state.kellyConfig}
+        casinoMode={casinoMode}
       />
 
       {/* Action bar */}
-      <div className="bg-gray-900/90 border-b border-gray-800 px-4 py-2">
+      <div className="bg-gray-900 border-b border-gray-800 px-4 py-2">
         <div className="max-w-4xl mx-auto flex items-center gap-2 flex-wrap">
-          {/* Left: game controls */}
-          <button
-            onClick={newRound}
-            className="px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white text-sm rounded-lg font-medium transition-colors"
-          >
+          {/* Game controls */}
+          <button onClick={newRound} className="px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white text-sm rounded-lg font-medium transition-colors">
             New Round
           </button>
-          <button
-            onClick={shuffleDeck}
-            className="px-3 py-1.5 bg-orange-700 hover:bg-orange-600 text-white text-sm rounded-lg font-medium transition-colors"
-          >
+          <button onClick={shuffleDeck} className="px-3 py-1.5 bg-orange-700 hover:bg-orange-600 text-white text-sm rounded-lg font-medium transition-colors">
             Shuffle
           </button>
           <button
             onClick={addPlayer}
             disabled={state.players.length >= 7}
-            className="px-3 py-1.5 bg-green-800 hover:bg-green-700 text-white text-sm rounded-lg font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded-lg font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             + Player
           </button>
 
-          {/* Right: balance tracker + result buttons */}
+          {/* Casino mode toggle */}
+          <button
+            onClick={() => setCasinoMode(m => !m)}
+            className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors border ${
+              casinoMode
+                ? 'bg-blue-900 border-blue-600 text-blue-300'
+                : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600'
+            }`}
+          >
+            {casinoMode ? 'Casino' : 'Count'} Mode
+          </button>
+
+          {/* Right side */}
           <div className="ml-auto flex items-center gap-2 flex-wrap justify-end">
             {/* Balance */}
-            <div className="flex items-center gap-1.5 bg-gray-800 rounded-lg px-3 py-1.5 border border-gray-700">
-              <span className="text-gray-400 text-xs">Balance</span>
-              <span className={`text-sm font-bold ${balance >= initialState.kellyConfig.bankroll ? 'text-green-400' : 'text-red-400'}`}>
+            <button
+              onClick={() => setShowStats(true)}
+              className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 rounded-lg px-3 py-1.5 border border-gray-700 transition-colors"
+            >
+              <span className="text-gray-500 text-xs">Balance</span>
+              <span className={`text-sm font-bold ${pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                 ${balance.toLocaleString()}
               </span>
-            </div>
+              {sessionStats.hands > 0 && (
+                <span className={`text-xs ${pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  ({pnl >= 0 ? '+' : ''}${pnl.toLocaleString()})
+                </span>
+              )}
+            </button>
 
             {/* Result buttons */}
             <div className="flex items-center gap-1">
-              <button
-                onClick={() => recordResult(1.5)}
-                title="Blackjack win (+1.5×)"
-                className="px-2 py-1.5 bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-bold rounded-lg transition-colors"
-              >
-                BJ
-              </button>
-              <button
-                onClick={() => recordResult(1)}
-                title="Win (+1×)"
-                className="px-2 py-1.5 bg-green-700 hover:bg-green-600 text-white text-xs font-bold rounded-lg transition-colors"
-              >
-                W
-              </button>
-              <button
-                onClick={() => recordResult(-1)}
-                title="Loss (−1×)"
-                className="px-2 py-1.5 bg-red-800 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors"
-              >
-                L
-              </button>
-              <button
-                onClick={() => recordResult(0)}
-                title="Push (no change)"
-                className="px-2 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs font-bold rounded-lg transition-colors"
-              >
-                P
-              </button>
+              <button onClick={() => recordResult(1.5, 'bj')} className="px-2 py-1.5 bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-bold rounded-lg transition-colors" title="Blackjack (+1.5×)">BJ</button>
+              <button onClick={() => recordResult(1, 'win')} className="px-2 py-1.5 bg-green-700 hover:bg-green-600 text-white text-xs font-bold rounded-lg transition-colors" title="Win (+1×)">W</button>
+              <button onClick={() => recordResult(-1, 'loss')} className="px-2 py-1.5 bg-red-800 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors" title="Loss (−1×)">L</button>
+              <button onClick={() => recordResult(0, 'push')} className="px-2 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs font-bold rounded-lg transition-colors" title="Push">P</button>
             </div>
 
-            <button
-              onClick={onReset}
-              className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-400 text-sm rounded-lg transition-colors border border-gray-700"
-            >
+            <button onClick={onReset} className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-500 text-sm rounded-lg transition-colors border border-gray-700">
               ← Setup
             </button>
           </div>
@@ -330,6 +347,16 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
       />
 
       <CardDrawer numDecks={state.numDecks} shuffleSignal={shuffleSignal} />
+
+      {showStats && (
+        <StatsPanel
+          stats={sessionStats}
+          balance={balance}
+          startingBalance={initialState.kellyConfig.bankroll}
+          kellyConfig={initialState.kellyConfig}
+          onClose={() => setShowStats(false)}
+        />
+      )}
     </div>
   );
 }

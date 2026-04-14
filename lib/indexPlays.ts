@@ -95,11 +95,6 @@ const INDEX_PLAYS: IndexPlay[] = [
     condition: (t, s, p, d, tc) => t === 13 && !s && !p && d === '3' && tc >= -2,
     action: 'STAND',
   },
-  // 15 vs A: surrender at TC >= +2 (instead of hit)
-  {
-    condition: (t, s, p, d, tc) => t === 15 && !s && !p && d === 'A' && tc >= 2,
-    action: 'SURRENDER',
-  },
 ];
 
 export function getIndexPlayDeviation(

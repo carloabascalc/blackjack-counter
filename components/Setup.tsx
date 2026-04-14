@@ -37,7 +37,6 @@ export default function Setup({ onStart }: SetupProps) {
   const [soft17, setSoft17] = useState<'S17' | 'H17'>('H17');
   const [das, setDas] = useState(true);
   const [rsa, setRsa] = useState(false);
-  const [surrender, setSurrender] = useState<'none' | 'late' | 'early'>('late');
   const [tableMin, setTableMin] = useState(15);
   const [tableMax, setTableMax] = useState(500);
 
@@ -51,7 +50,7 @@ export default function Setup({ onStart }: SetupProps) {
   }
 
   function handleStart() {
-    const ruleSet: RuleSet = { blackjackPayout: payout, soft17, das, rsa, surrender, tableMin, tableMax };
+    const ruleSet: RuleSet = { blackjackPayout: payout, soft17, das, rsa, tableMin, tableMax };
     const kellyConfig: KellyConfig = { bankroll, fraction: kellyFraction };
     onStart(numDecks, numPlayers, youSeat, ruleSet, kellyConfig);
   }
@@ -177,15 +176,6 @@ export default function Setup({ onStart }: SetupProps) {
                 </div>
               </div>
 
-              {/* Surrender */}
-              <div className="flex items-center justify-between">
-                <span className="text-green-300 text-sm">Surrender</span>
-                <div className="flex gap-2">
-                  <ToggleButton active={surrender === 'early'} onClick={() => setSurrender('early')}>Early</ToggleButton>
-                  <ToggleButton active={surrender === 'late'} onClick={() => setSurrender('late')}>Late</ToggleButton>
-                  <ToggleButton active={surrender === 'none'} onClick={() => setSurrender('none')} danger>None</ToggleButton>
-                </div>
-              </div>
 
               {/* Table limits */}
               <div className="flex items-center justify-between gap-4 pt-1">
@@ -259,7 +249,7 @@ export default function Setup({ onStart }: SetupProps) {
             <div className="flex justify-between">
               <span>Rules:</span>
               <span className={`font-bold ${payout === '6:5' ? 'text-red-400' : 'text-white'}`}>
-                {payout} · {soft17} · {surrender !== 'none' ? surrender.charAt(0).toUpperCase() + surrender.slice(1) + ' Sur.' : 'No Sur.'}
+                {payout} · {soft17} · {das ? 'DAS' : 'No DAS'}
               </span>
             </div>
             <div className="flex justify-between">
