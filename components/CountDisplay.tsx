@@ -1,6 +1,6 @@
 'use client';
 
-import { calcTrueCount, getBetAdvice, getCountColor, getKellyBet, calcBaselineEdge } from '@/lib/cardCounting';
+import { calcTrueCount, getBetAdvice, getCountColor, getKellyBet, calcBaselineEdge, recommendedBankroll } from '@/lib/cardCounting';
 import { RuleSet, KellyConfig } from '@/lib/types';
 
 interface CountDisplayProps {
@@ -17,9 +17,11 @@ export default function CountDisplay({ runningCount, cardsDealt, totalCards, rul
   const trueCount = casinoMode ? 0 : calcTrueCount(runningCount, remaining);
   const bet = getBetAdvice(trueCount, ruleSet);
   const kellyBet = casinoMode ? ruleSet.tableMin : getKellyBet(trueCount, ruleSet, kellyConfig);
+  const units = Math.round(kellyBet / ruleSet.tableMin);
   const countColor = getCountColor(trueCount);
   const penetration = totalCards > 0 ? (cardsDealt / totalCards) * 100 : 0;
   const baseEdge = calcBaselineEdge(ruleSet);
+  const isUnderbankrolled = kellyConfig.bankroll < recommendedBankroll(ruleSet);
 
   if (casinoMode) {
     return (
@@ -85,7 +87,7 @@ export default function CountDisplay({ runningCount, cardsDealt, totalCards, rul
           <div className={`rounded-xl p-3 text-center border border-gray-700/50 ${bet.bgColor}`}>
             <div className="text-gray-400 text-xs uppercase tracking-wider mb-1 font-medium">Bet</div>
             <div className={`text-xl font-bold ${bet.color}`}>${kellyBet}</div>
-            <div className={`text-xs mt-0.5 ${bet.color} opacity-70`}>{bet.edge}</div>
+            <div className={`text-xs mt-0.5 ${bet.color} opacity-60`}>{units}u · {bet.edge}</div>
           </div>
         </div>
 
@@ -101,6 +103,12 @@ export default function CountDisplay({ runningCount, cardsDealt, totalCards, rul
           </div>
           <span className="text-gray-700 text-xs">{penetration.toFixed(0)}%</span>
         </div>
+
+        {isUnderbankrolled && (
+          <div className="mt-2 text-yellow-600 text-xs text-center">
+            ⚠️ Bankroll below 100 units (${recommendedBankroll(ruleSet).toLocaleString()} recommended for ${ruleSet.tableMin} table)
+          </div>
+        )}
       </div>
     </div>
   );

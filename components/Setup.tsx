@@ -210,7 +210,7 @@ export default function Setup({ onStart }: SetupProps) {
             </label>
             <div className="space-y-3 bg-green-800/40 rounded-xl p-4 border border-green-700">
               <div className="flex items-center justify-between gap-4">
-                <span className="text-green-300 text-sm">Session Bankroll</span>
+                <span className="text-green-300 text-sm">Total Bankroll</span>
                 <div className="flex items-center gap-2">
                   <span className="text-green-500 text-sm">$</span>
                   <input
@@ -231,7 +231,7 @@ export default function Setup({ onStart }: SetupProps) {
                 </div>
               </div>
               <p className="text-green-600 text-xs">
-                ½ Kelly recommended — same growth rate, half the variance
+                Total bankroll (not session buy-in) · ½ Kelly recommended
               </p>
             </div>
           </div>

@@ -33,15 +33,51 @@ export function calcBaselineEdge(rules: RuleSet): number {
   return edge;
 }
 
-// Kelly Criterion bet sizing.
-// Returns a dollar amount clamped to table min/max.
+// Bet spread multiplier based on true count and Kelly fraction.
+// Unit = tableMin. Fraction controls how aggressively the spread ramps.
+//
+// Full Kelly  — 1-8 spread (max aggression, fast ramp)
+// Half Kelly  — 1-5 spread (balanced, standard counter approach)
+// Quarter Kelly — 1-3 spread (conservative, lower variance)
+//
+// Pure Kelly formula (edge% × fraction × bankroll) requires a total AP
+// bankroll of $3k–$10k to produce bets above typical table minimums.
+// Unit-spread is what counters actually use at the table and correctly
+// scales the bet with the count regardless of session buy-in size.
+function getBetSpread(trueCount: number, fraction: 'full' | 'half' | 'quarter'): number {
+  if (fraction === 'full') {
+    if (trueCount < 1) return 1;
+    if (trueCount < 2) return 2;
+    if (trueCount < 3) return 4;
+    if (trueCount < 4) return 6;
+    return 8;
+  }
+  if (fraction === 'half') {
+    if (trueCount < 1) return 1;
+    if (trueCount < 2) return 1;
+    if (trueCount < 3) return 2;
+    if (trueCount < 4) return 3;
+    return 5;
+  }
+  // quarter
+  if (trueCount < 1) return 1;
+  if (trueCount < 2) return 1;
+  if (trueCount < 3) return 2;
+  return 3;
+}
+
+// Returns recommended bet in dollars: tableMin × spread multiplier, clamped to table limits.
 export function getKellyBet(trueCount: number, rules: RuleSet, kelly: KellyConfig): number {
   const baseEdge = calcBaselineEdge(rules);
   const edgePct = trueCount * 0.5 + baseEdge;
   if (edgePct <= 0) return rules.tableMin;
-  const fraction = kelly.fraction === 'full' ? 1 : kelly.fraction === 'half' ? 0.5 : 0.25;
-  const raw = (edgePct / 100) * fraction * kelly.bankroll;
-  return Math.min(Math.max(Math.round(raw), rules.tableMin), rules.tableMax);
+  const spread = getBetSpread(trueCount, kelly.fraction);
+  return Math.min(rules.tableMin * spread, rules.tableMax);
+}
+
+// Minimum recommended bankroll for the configured table (100 units).
+export function recommendedBankroll(rules: RuleSet): number {
+  return rules.tableMin * 100;
 }
 
 // Bet advice based on true count.
