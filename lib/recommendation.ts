@@ -1,7 +1,8 @@
-import { Card, CardRank, Action } from './types';
+import { Card, CardRank, Action, RuleSet } from './types';
 import { calcHandValue, isPair } from './cardCounting';
 import { getBasicStrategyAction } from './basicStrategy';
 import { getIndexPlayDeviation } from './indexPlays';
+import { getCompositionDeviation } from './compositionStrategy';
 
 function pairCardValue(rank: CardRank): number {
   if (rank === 'A') return 11;
@@ -9,10 +10,21 @@ function pairCardValue(rank: CardRank): number {
   return parseInt(rank);
 }
 
+// H17 strategy deviations — applies when dealer hits soft 17.
+// Only covers situations where H17 changes the correct play vs S17.
+function getH17Deviation(playerTotal: number, isSoft: boolean, dealerUpCard: CardRank): Action | null {
+  // Hard 11 vs A → Double (S17 basic: Hit; index play covers TC >= 1, this fills TC < 1)
+  if (playerTotal === 11 && !isSoft && dealerUpCard === 'A') return 'DOUBLE';
+  // Soft 18 (A+7) vs 2 → Double (S17 basic: Stand)
+  if (playerTotal === 18 && isSoft && dealerUpCard === '2') return 'DOUBLE';
+  return null;
+}
+
 export function getRecommendation(
   playerCards: Card[],
   dealerUpCard: CardRank | null,
-  trueCount: number
+  trueCount: number,
+  rules?: RuleSet
 ): Action {
   if (!dealerUpCard || playerCards.length < 2) return '-';
 
@@ -23,10 +35,20 @@ export function getRecommendation(
   const pair = isPair(playerCards);
   const pairValue = pair ? pairCardValue(playerCards[0].rank) : 0;
 
-  // Check index plays first (they override basic strategy)
+  // 1. Index plays — TC-based deviations, highest priority
   const deviation = getIndexPlayDeviation(total, isSoft, pair, dealerUpCard, trueCount);
   if (deviation) return deviation;
 
-  // Fall back to basic strategy
+  // 2. H17 deviations — rule-based corrections when dealer hits soft 17
+  if (rules?.soft17 === 'H17') {
+    const h17 = getH17Deviation(total, isSoft, dealerUpCard);
+    if (h17) return h17;
+  }
+
+  // 3. Composition-dependent deviations — exact card composition refinements
+  const compDeviation = getCompositionDeviation(playerCards, dealerUpCard);
+  if (compDeviation) return compDeviation;
+
+  // 4. Basic strategy fallback
   return getBasicStrategyAction(total, isSoft, pair, pairValue, dealerUpCard);
 }

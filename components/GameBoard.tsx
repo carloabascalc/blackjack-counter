@@ -199,6 +199,8 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
         runningCount={state.runningCount}
         cardsDealt={state.cardsDealt}
         totalCards={state.totalCards}
+        ruleSet={state.ruleSet}
+        kellyConfig={state.kellyConfig}
       />
 
       {/* Action bar */}
@@ -255,6 +257,7 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
                 player={player}
                 dealerUpCard={dealerUpCard}
                 trueCount={trueCount}
+                ruleSet={state.ruleSet}
                 isActive={state.activePlayerId === player.id}
                 activeHandId={state.activePlayerId === player.id ? state.activeHandId : null}
                 isYou={player.id === state.youPlayerId}

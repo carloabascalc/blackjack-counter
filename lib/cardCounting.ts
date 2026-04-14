@@ -1,4 +1,4 @@
-import { Card, CardRank } from './types';
+import { Card, CardRank, RuleSet, KellyConfig } from './types';
 
 // Hi-Lo system: statistically strongest balanced counting system
 // Betting Correlation: 0.97, Playing Efficiency: 0.51, Insurance Correlation: 0.76
@@ -22,17 +22,41 @@ export function calcRemainingCards(totalCards: number, cardsDealt: number): numb
   return Math.max(0, totalCards - cardsDealt);
 }
 
+// Baseline house edge adjusted for table rules.
+// Reference point: 6-deck, S17, 3:2, no DAS, no RSA, no surrender ≈ −0.55%
+export function calcBaselineEdge(rules: RuleSet): number {
+  let edge = -0.55;
+  if (rules.blackjackPayout === '6:5') edge -= 1.39;
+  if (rules.soft17 === 'H17') edge -= 0.22;
+  if (rules.das) edge += 0.14;
+  if (rules.rsa) edge += 0.08;
+  if (rules.surrender === 'late') edge += 0.07;
+  if (rules.surrender === 'early') edge += 0.62;
+  return edge;
+}
+
+// Kelly Criterion bet sizing.
+// Returns a dollar amount clamped to table min/max.
+export function getKellyBet(trueCount: number, rules: RuleSet, kelly: KellyConfig): number {
+  const baseEdge = calcBaselineEdge(rules);
+  const edgePct = trueCount * 0.5 + baseEdge;
+  if (edgePct <= 0) return rules.tableMin;
+  const fraction = kelly.fraction === 'full' ? 1 : kelly.fraction === 'half' ? 0.5 : 0.25;
+  const raw = (edgePct / 100) * fraction * kelly.bankroll;
+  return Math.min(Math.max(Math.round(raw), rules.tableMin), rules.tableMax);
+}
+
 // Bet advice based on true count.
-// Player edge formula (6-deck S17): edge ≈ trueCount × 0.5% − 0.55%
-// Bet spread 1–8 units using standard Hi-Lo indexing.
-export function getBetAdvice(trueCount: number): {
+// If rules provided, baseline edge is adjusted to actual table conditions.
+export function getBetAdvice(trueCount: number, rules?: RuleSet): {
   label: string;
   units: string;
   edge: string;
   color: string;
   bgColor: string;
 } {
-  const edgePct = trueCount * 0.5 - 0.55;
+  const baseEdge = rules ? calcBaselineEdge(rules) : -0.55;
+  const edgePct = trueCount * 0.5 + baseEdge;
   const edgeStr = (edgePct >= 0 ? '+' : '') + edgePct.toFixed(2) + '%';
 
   if (trueCount < 1)  return { label: 'SIT OUT / MIN', units: '1×', edge: edgeStr, color: 'text-red-400',    bgColor: 'bg-red-950/60' };

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Setup from '@/components/Setup';
 import GameBoard from '@/components/GameBoard';
-import { GameState, Player } from '@/lib/types';
+import { GameState, Player, RuleSet, KellyConfig } from '@/lib/types';
 
 let playerIdSeed = 1;
 let handIdSeed = 1;
@@ -12,7 +12,13 @@ function makeHand() {
   return { id: `hand-${handIdSeed++}`, cards: [] };
 }
 
-function createInitialState(numDecks: number, numPlayers: number, youSeat: number): GameState {
+function createInitialState(
+  numDecks: number,
+  numPlayers: number,
+  youSeat: number,
+  ruleSet: RuleSet,
+  kellyConfig: KellyConfig
+): GameState {
   playerIdSeed = 1;
   handIdSeed = 1;
 
@@ -42,14 +48,16 @@ function createInitialState(numDecks: number, numPlayers: number, youSeat: numbe
     activePlayerId: firstPlayerId,
     activeHandId: firstHandId,
     youPlayerId: players.find(p => p.isYou)?.id ?? firstPlayerId,
+    ruleSet,
+    kellyConfig,
   };
 }
 
 export default function Home() {
   const [gameState, setGameState] = useState<GameState | null>(null);
 
-  function handleStart(numDecks: number, numPlayers: number, youSeat: number) {
-    setGameState(createInitialState(numDecks, numPlayers, youSeat));
+  function handleStart(numDecks: number, numPlayers: number, youSeat: number, ruleSet: RuleSet, kellyConfig: KellyConfig) {
+    setGameState(createInitialState(numDecks, numPlayers, youSeat, ruleSet, kellyConfig));
   }
 
   function handleReset() {

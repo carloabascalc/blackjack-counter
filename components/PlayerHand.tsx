@@ -1,6 +1,6 @@
 'use client';
 
-import { Player, Hand, CardRank } from '@/lib/types';
+import { Player, Hand, CardRank, RuleSet } from '@/lib/types';
 import { calcHandValue, isPair } from '@/lib/cardCounting';
 import { getRecommendation } from '@/lib/recommendation';
 import CardChip from './CardChip';
@@ -10,6 +10,7 @@ interface PlayerHandProps {
   player: Player;
   dealerUpCard: CardRank | null;
   trueCount: number;
+  ruleSet: RuleSet;
   isActive: boolean;
   activeHandId: string | null;
   isYou: boolean;
@@ -23,6 +24,7 @@ function HandSection({
   hand,
   dealerUpCard,
   trueCount,
+  ruleSet,
   isActiveHand,
   isYou,
   handLabel,
@@ -32,6 +34,7 @@ function HandSection({
   hand: Hand;
   dealerUpCard: CardRank | null;
   trueCount: number;
+  ruleSet: RuleSet;
   isActiveHand: boolean;
   isYou: boolean;
   handLabel: string;
@@ -39,7 +42,7 @@ function HandSection({
   onSplit: () => void;
 }) {
   const { total, isSoft, isBust } = calcHandValue(hand.cards);
-  const recommendation = getRecommendation(hand.cards, dealerUpCard, trueCount);
+  const recommendation = getRecommendation(hand.cards, dealerUpCard, trueCount, ruleSet);
   const canSplit = hand.cards.length === 2 && isPair(hand.cards);
   const hasCards = hand.cards.length > 0;
 
@@ -105,6 +108,7 @@ export default function PlayerHand({
   player,
   dealerUpCard,
   trueCount,
+  ruleSet,
   isActive,
   activeHandId,
   isYou,
@@ -166,6 +170,7 @@ export default function PlayerHand({
             hand={hand}
             dealerUpCard={dealerUpCard}
             trueCount={trueCount}
+            ruleSet={ruleSet}
             isActiveHand={isActive && hand.id === activeHandId}
             isYou={isYou}
             handLabel={multiHand ? `Hand ${i + 1}` : 'Hand'}

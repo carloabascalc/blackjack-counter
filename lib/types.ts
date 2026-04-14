@@ -16,6 +16,21 @@ export interface Player {
   hands: Hand[];
 }
 
+export interface RuleSet {
+  blackjackPayout: '3:2' | '6:5';
+  soft17: 'S17' | 'H17';
+  das: boolean;
+  rsa: boolean;
+  surrender: 'none' | 'late' | 'early';
+  tableMin: number;
+  tableMax: number;
+}
+
+export interface KellyConfig {
+  bankroll: number;
+  fraction: 'full' | 'half' | 'quarter';
+}
+
 export interface GameState {
   numDecks: number;
   totalCards: number;
@@ -26,6 +41,8 @@ export interface GameState {
   activePlayerId: string; // 'dealer' or player.id
   activeHandId: string;   // hand.id within the active player
   youPlayerId: string;
+  ruleSet: RuleSet;
+  kellyConfig: KellyConfig;
 }
 
 export type Action = 'HIT' | 'STAND' | 'DOUBLE' | 'SPLIT' | 'SURRENDER' | 'INSURANCE' | '-';
