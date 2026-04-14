@@ -7,6 +7,7 @@ export interface Card {
 export interface Hand {
   id: string;
   cards: Card[];
+  hasHiddenCard?: boolean; // dealer's face-down hole card — not counted until revealed
 }
 
 export interface Player {

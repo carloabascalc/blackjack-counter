@@ -104,7 +104,10 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
       const card: Card = { rank };
 
       if (next.activePlayerId === 'dealer') {
-        next.dealer.hands[0].cards.push(card);
+        const dealerHand = next.dealer.hands[0];
+        dealerHand.cards.push(card);
+        // If hole card was pending, this card reveals it — clear the flag
+        if (dealerHand.hasHiddenCard) dealerHand.hasHiddenCard = false;
       } else {
         const player = next.players.find(p => p.id === next.activePlayerId);
         if (player) {
@@ -115,6 +118,15 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
 
       next.runningCount += getHiLoValue(card);
       next.cardsDealt += 1;
+      return next;
+    });
+  }
+
+  function toggleDealerHiddenCard() {
+    setState(prev => {
+      const next = cloneState(prev);
+      const hand = next.dealer.hands[0];
+      hand.hasHiddenCard = !hand.hasHiddenCard;
       return next;
     });
   }
@@ -150,7 +162,7 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
   function newRound() {
     setState(prev => {
       const next = cloneState(prev);
-      next.dealer.hands = [{ id: newHandId(), cards: [] }];
+      next.dealer.hands = [{ id: newHandId(), cards: [], hasHiddenCard: false }];
       next.players = next.players.map(p => ({
         ...p,
         hands: [{ id: newHandId(), cards: [] }],
@@ -168,7 +180,7 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
       const next = cloneState(prev);
       next.runningCount = 0;
       next.cardsDealt = 0;
-      next.dealer.hands = [{ id: newHandId(), cards: [] }];
+      next.dealer.hands = [{ id: newHandId(), cards: [], hasHiddenCard: false }];
       next.players = next.players.map(p => ({
         ...p,
         hands: [{ id: newHandId(), cards: [] }],
@@ -312,6 +324,7 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
             dealer={state.dealer}
             isActive={state.activePlayerId === 'dealer'}
             onSelect={() => setActive('dealer')}
+            onToggleHiddenCard={toggleDealerHiddenCard}
           />
 
           <div className={`grid gap-3 ${
