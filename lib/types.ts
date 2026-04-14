@@ -1,0 +1,23 @@
+export type CardRank = 'A' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K';
+
+export interface Card {
+  rank: CardRank;
+}
+
+export interface Player {
+  id: string;
+  name: string;
+  cards: Card[];
+}
+
+export interface GameState {
+  numDecks: number;
+  totalCards: number;
+  cardsDealt: number;
+  runningCount: number;
+  players: Player[];
+  dealer: Player;
+  activePlayerId: string; // 'dealer' or player.id
+}
+
+export type Action = 'HIT' | 'STAND' | 'DOUBLE' | 'SPLIT' | 'SURRENDER' | 'INSURANCE' | '-';
