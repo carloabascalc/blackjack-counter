@@ -53,7 +53,7 @@ export default function StatsPanel({ stats, balance, startingBalance, kellyConfi
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-white font-bold text-lg">Session Stats</h2>
+          <h2 className="text-white font-bold text-lg">Session Stats <span className="text-gray-600 text-sm font-normal">MXN</span></h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-xl w-7 h-7 flex items-center justify-center">×</button>
         </div>
 

@@ -295,6 +295,7 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
               <span className={`text-sm font-bold ${pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                 ${balance.toLocaleString()}
               </span>
+              <span className="text-gray-600 text-xs">MXN</span>
               {sessionStats.hands > 0 && (
                 <span className={`text-xs ${pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   ({pnl >= 0 ? '+' : ''}${pnl.toLocaleString()})

@@ -37,11 +37,11 @@ export default function Setup({ onStart }: SetupProps) {
   const [soft17, setSoft17] = useState<'S17' | 'H17'>('H17');
   const [das, setDas] = useState(true);
   const [rsa, setRsa] = useState(false);
-  const [tableMin, setTableMin] = useState(15);
-  const [tableMax, setTableMax] = useState(500);
+  const [tableMin, setTableMin] = useState(100);
+  const [tableMax, setTableMax] = useState(10000);
 
   // Kelly
-  const [bankroll, setBankroll] = useState(500);
+  const [bankroll, setBankroll] = useState(3000);
   const [kellyFraction, setKellyFraction] = useState<'full' | 'half' | 'quarter'>('half');
 
   function handleNumPlayers(n: number) {
@@ -210,7 +210,7 @@ export default function Setup({ onStart }: SetupProps) {
             </label>
             <div className="space-y-3 bg-green-800/40 rounded-xl p-4 border border-green-700">
               <div className="flex items-center justify-between gap-4">
-                <span className="text-green-300 text-sm">Total Bankroll</span>
+                <span className="text-green-300 text-sm">Session Bankroll</span>
                 <div className="flex items-center gap-2">
                   <span className="text-green-500 text-sm">$</span>
                   <input
@@ -231,7 +231,7 @@ export default function Setup({ onStart }: SetupProps) {
                 </div>
               </div>
               <p className="text-green-600 text-xs">
-                Total bankroll (not session buy-in) · ½ Kelly recommended
+                How much you are bringing to this session (MXN) · ½ Kelly recommended
               </p>
             </div>
           </div>
@@ -253,8 +253,8 @@ export default function Setup({ onStart }: SetupProps) {
               </span>
             </div>
             <div className="flex justify-between">
-              <span>Bankroll:</span>
-              <span className="text-white font-bold">${bankroll} · {kellyFraction === 'quarter' ? '¼' : kellyFraction === 'half' ? '½' : 'Full'} Kelly</span>
+              <span>Session:</span>
+              <span className="text-white font-bold">${bankroll.toLocaleString()} MXN · {kellyFraction === 'quarter' ? '¼' : kellyFraction === 'half' ? '½' : 'Full'} Kelly</span>
             </div>
             {payout === '6:5' && (
               <div className="mt-2 text-red-400 text-xs font-semibold text-center bg-red-950/50 rounded-lg p-2">

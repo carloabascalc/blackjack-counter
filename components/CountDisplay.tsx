@@ -1,6 +1,6 @@
 'use client';
 
-import { calcTrueCount, getBetAdvice, getCountColor, getKellyBet, calcBaselineEdge, recommendedBankroll } from '@/lib/cardCounting';
+import { calcTrueCount, getBetAdvice, getCountColor, getKellyBet, calcBaselineEdge } from '@/lib/cardCounting';
 import { RuleSet, KellyConfig } from '@/lib/types';
 
 interface CountDisplayProps {
@@ -21,7 +21,6 @@ export default function CountDisplay({ runningCount, cardsDealt, totalCards, rul
   const countColor = getCountColor(trueCount);
   const penetration = totalCards > 0 ? (cardsDealt / totalCards) * 100 : 0;
   const baseEdge = calcBaselineEdge(ruleSet);
-  const isUnderbankrolled = kellyConfig.bankroll < recommendedBankroll(ruleSet);
 
   if (casinoMode) {
     return (
@@ -104,11 +103,6 @@ export default function CountDisplay({ runningCount, cardsDealt, totalCards, rul
           <span className="text-gray-700 text-xs">{penetration.toFixed(0)}%</span>
         </div>
 
-        {isUnderbankrolled && (
-          <div className="mt-2 text-yellow-600 text-xs text-center">
-            ⚠️ Bankroll below 100 units (${recommendedBankroll(ruleSet).toLocaleString()} recommended for ${ruleSet.tableMin} table)
-          </div>
-        )}
       </div>
     </div>
   );
