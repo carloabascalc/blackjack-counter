@@ -52,16 +52,16 @@ function HandSection({
       className={`rounded-lg p-3 cursor-pointer transition-all border ${
         isActiveHand
           ? isYou
-            ? 'border-blue-400 bg-blue-950/40'
-            : 'border-yellow-400 bg-green-800/60'
-          : 'border-green-800/60 bg-green-900/30 hover:border-green-600'
+            ? 'border-blue-500/70 bg-blue-950/30'
+            : 'border-yellow-500/60 bg-gray-800/60'
+          : 'border-gray-800 bg-gray-900/40 hover:border-gray-700'
       }`}
     >
       <div className="flex items-center justify-between mb-2">
-        <span className={`text-xs font-semibold ${isActiveHand ? 'text-green-300' : 'text-green-600'}`}>
+        <span className={`text-xs font-medium ${isActiveHand ? 'text-gray-300' : 'text-gray-600'}`}>
           {handLabel}
           {isActiveHand && (
-            <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold ${isYou ? 'bg-blue-500 text-white' : 'bg-yellow-500 text-black'}`}>
+            <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold ${isYou ? 'bg-blue-600 text-white' : 'bg-yellow-500 text-black'}`}>
               ACTIVE
             </span>
           )}
@@ -69,9 +69,9 @@ function HandSection({
         {canSplit && (
           <button
             onClick={e => { e.stopPropagation(); onSplit(); }}
-            className="text-xs px-2 py-0.5 rounded bg-purple-700 hover:bg-purple-600 text-purple-200 font-bold transition-colors border border-purple-600"
+            className="text-xs px-2 py-0.5 rounded bg-purple-800 hover:bg-purple-700 text-purple-300 font-bold transition-colors border border-purple-700"
           >
-            ✂️ Split
+            Split
           </button>
         )}
       </div>
@@ -82,7 +82,7 @@ function HandSection({
           <CardChip key={i} card={card} />
         ))}
         {!hasCards && (
-          <div className="flex items-center text-green-700 text-xs italic">
+          <div className="flex items-center text-gray-700 text-xs italic">
             No cards
           </div>
         )}
@@ -92,11 +92,12 @@ function HandSection({
       <div className="flex items-center justify-between">
         {hasCards ? (
           <span className={`font-bold ${isBust ? 'text-red-400 text-base' : 'text-white text-lg'}`}>
-            {isSoft && !isBust ? 'Soft ' : ''}{total}
-            {isBust && ' BUST'}
+            {isSoft && !isBust ? <span className="text-xs text-gray-400 font-normal mr-0.5">soft</span> : null}
+            {total}
+            {isBust && <span className="text-sm ml-1">BUST</span>}
           </span>
         ) : (
-          <span className="text-green-700 text-sm">—</span>
+          <span className="text-gray-700 text-sm">—</span>
         )}
         <ActionBadge action={recommendation} large={isActiveHand && isYou} />
       </div>
@@ -120,41 +121,39 @@ export default function PlayerHand({
   const multiHand = player.hands.length > 1;
 
   return (
-    <div className={`relative rounded-xl p-3 transition-all border-2 ${
+    <div className={`relative rounded-xl p-3 transition-all border ${
       isActive
         ? isYou
-          ? 'border-blue-400 bg-green-900/70 shadow-blue-400/20 shadow-lg'
-          : 'border-yellow-400 bg-green-800/80 shadow-yellow-400/20 shadow-lg'
-        : 'border-green-700 bg-green-900/60 hover:border-green-600'
+          ? 'border-blue-500/60 bg-gray-900 shadow-lg shadow-blue-900/30'
+          : 'border-yellow-500/50 bg-gray-900 shadow-lg shadow-yellow-900/20'
+        : 'border-gray-800 bg-gray-900/50 hover:border-gray-700'
     }`}>
       {/* Header row */}
       <div className="flex items-center gap-1.5 mb-3">
-        <span className={`text-sm font-bold ${isYou ? 'text-blue-400' : 'text-green-300'}`}>
+        <span className={`text-sm font-bold ${isYou ? 'text-blue-400' : 'text-gray-300'}`}>
           {player.name}
         </span>
         {isYou && (
-          <span className="text-xs bg-blue-500 text-white px-1.5 py-0.5 rounded font-bold">You</span>
+          <span className="text-[10px] bg-blue-600 text-white px-1.5 py-0.5 rounded font-bold tracking-wide">YOU</span>
         )}
         {multiHand && (
-          <span className="text-xs text-purple-400 font-semibold ml-1">{player.hands.length} hands</span>
+          <span className="text-xs text-purple-400 font-medium ml-1">{player.hands.length} hands</span>
         )}
 
-        {/* Set as me button — shown on non-you players */}
         {!isYou && (
           <button
             onClick={e => { e.stopPropagation(); onSetYou(); }}
             title="Set as my seat"
-            className="ml-1 text-xs px-1.5 py-0.5 rounded bg-green-800 hover:bg-blue-700 text-green-400 hover:text-white transition-colors border border-green-700 hover:border-blue-500"
+            className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-gray-800 hover:bg-blue-800 text-gray-500 hover:text-blue-300 transition-colors border border-gray-700 hover:border-blue-700"
           >
-            👤 Me
+            Me
           </button>
         )}
 
-        <div className="ml-auto flex items-center gap-1">
-          {/* Remove player */}
+        <div className="ml-auto">
           <button
             onClick={e => { e.stopPropagation(); onRemove(); }}
-            className="w-5 h-5 rounded-full bg-red-900/70 hover:bg-red-700 text-red-300 text-xs flex items-center justify-center transition-colors"
+            className="w-5 h-5 rounded-full bg-gray-800 hover:bg-red-900 text-gray-600 hover:text-red-300 text-xs flex items-center justify-center transition-colors"
             title="Remove player"
           >
             ×

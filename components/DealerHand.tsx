@@ -20,42 +20,37 @@ export default function DealerHand({ dealer, isActive, onSelect }: DealerHandPro
   return (
     <div
       onClick={onSelect}
-      className={`rounded-xl p-4 cursor-pointer transition-all border-2 ${
+      className={`rounded-xl p-4 cursor-pointer transition-all border ${
         isActive
-          ? 'border-red-400 bg-green-800/80 shadow-red-400/20 shadow-lg'
-          : 'border-green-700 bg-green-900/60 hover:border-green-500'
+          ? 'border-red-500/70 bg-gray-900 shadow-lg shadow-red-900/20'
+          : 'border-gray-800 bg-gray-900/60 hover:border-gray-700'
       }`}
     >
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-sm font-bold text-red-400">Dealer</span>
+        <span className="text-xs font-bold text-red-400 uppercase tracking-wider">Dealer</span>
         {upCard && (
-          <span className="text-xs text-green-400">
-            Up card: <span className="text-white font-bold">{upCard}</span>
+          <span className="text-xs text-gray-500">
+            Up: <span className="text-gray-200 font-semibold">{upCard}</span>
+          </span>
+        )}
+        {hasCards && (
+          <span className={`ml-1 text-sm font-bold ${isBust ? 'text-red-400' : 'text-white'}`}>
+            {isBust ? 'BUST' : total}
           </span>
         )}
         {isActive && (
-          <span className="text-xs bg-red-500 text-white px-1.5 py-0.5 rounded font-bold ml-auto">ACTIVE</span>
+          <span className="ml-auto text-xs bg-red-600 text-white px-2 py-0.5 rounded font-bold">ACTIVE</span>
         )}
       </div>
 
-      <div className="flex flex-wrap gap-2 min-h-[4rem]">
+      <div className="flex flex-wrap gap-2 min-h-[4rem] items-center">
         {cards.map((card, i) => (
           <CardChip key={i} card={card} />
         ))}
         {!hasCards && (
-          <div className="flex items-center text-green-600 text-sm italic">
-            No cards yet
-          </div>
+          <span className="text-gray-700 text-sm italic">No cards</span>
         )}
       </div>
-
-      {hasCards && (
-        <div className="mt-3 text-sm">
-          <span className={`font-bold text-lg ${isBust ? 'text-red-400' : 'text-white'}`}>
-            {total}{isBust ? ' BUST' : ''}
-          </span>
-        </div>
-      )}
     </div>
   );
 }

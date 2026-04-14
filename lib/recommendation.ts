@@ -35,9 +35,14 @@ export function getRecommendation(
   const pair = isPair(playerCards);
   const pairValue = pair ? pairCardValue(playerCards[0].rank) : 0;
 
+  const noSurrender = rules?.surrender === 'none';
+
   // 1. Index plays — TC-based deviations, highest priority
   const deviation = getIndexPlayDeviation(total, isSoft, pair, dealerUpCard, trueCount);
-  if (deviation) return deviation;
+  if (deviation) {
+    if (deviation === 'SURRENDER' && noSurrender) return 'HIT';
+    return deviation;
+  }
 
   // 2. H17 deviations — rule-based corrections when dealer hits soft 17
   if (rules?.soft17 === 'H17') {
@@ -50,5 +55,9 @@ export function getRecommendation(
   if (compDeviation) return compDeviation;
 
   // 4. Basic strategy fallback
-  return getBasicStrategyAction(total, isSoft, pair, pairValue, dealerUpCard);
+  const action = getBasicStrategyAction(total, isSoft, pair, pairValue, dealerUpCard);
+
+  // If surrender is not allowed at this table, fall back to hit
+  if (action === 'SURRENDER' && rules?.surrender === 'none') return 'HIT';
+  return action;
 }

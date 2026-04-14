@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import { GameState, CardRank, Card, Hand, Player } from '@/lib/types';
-import { getHiLoValue, calcTrueCount, calcRemainingCards } from '@/lib/cardCounting';
+import { getHiLoValue, calcTrueCount, calcRemainingCards, getKellyBet } from '@/lib/cardCounting';
 import { isPair } from '@/lib/cardCounting';
 import CountDisplay from './CountDisplay';
 import DealerHand from './DealerHand';
 import PlayerHand from './PlayerHand';
 import CardInputPanel from './CardInputPanel';
+import CardDrawer from './CardDrawer';
 
 interface GameBoardProps {
   initialState: GameState;
@@ -50,10 +51,17 @@ function getActiveLabel(state: GameState): string {
 export default function GameBoard({ initialState, onReset }: GameBoardProps) {
   const [state, setState] = useState<GameState>(cloneState(initialState));
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [balance, setBalance] = useState(initialState.kellyConfig.bankroll);
+  const [shuffleSignal, setShuffleSignal] = useState(0);
 
   const remaining = calcRemainingCards(state.totalCards, state.cardsDealt);
   const trueCount = calcTrueCount(state.runningCount, remaining);
   const dealerUpCard: CardRank | null = state.dealer.hands[0]?.cards[0]?.rank ?? null;
+  const kellyBet = getKellyBet(trueCount, state.ruleSet, state.kellyConfig);
+
+  function recordResult(multiplier: number) {
+    setBalance(b => Math.round((b + kellyBet * multiplier) * 100) / 100);
+  }
 
   function pushHistory(s: GameState) {
     setHistory(h => [...h.slice(-49), { state: cloneState(s) }]);
@@ -141,6 +149,7 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
       return next;
     });
     setHistory([]);
+    setShuffleSignal(s => s + 1);
   }
 
   function addPlayer() {
@@ -194,7 +203,7 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
   }
 
   return (
-    <div className="min-h-screen bg-green-950 flex flex-col">
+    <div className="min-h-screen bg-gray-950 flex flex-col">
       <CountDisplay
         runningCount={state.runningCount}
         cardsDealt={state.cardsDealt}
@@ -204,8 +213,9 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
       />
 
       {/* Action bar */}
-      <div className="bg-green-900/80 border-b border-green-800 px-4 py-2">
+      <div className="bg-gray-900/90 border-b border-gray-800 px-4 py-2">
         <div className="max-w-4xl mx-auto flex items-center gap-2 flex-wrap">
+          {/* Left: game controls */}
           <button
             onClick={newRound}
             className="px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white text-sm rounded-lg font-medium transition-colors"
@@ -216,20 +226,61 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
             onClick={shuffleDeck}
             className="px-3 py-1.5 bg-orange-700 hover:bg-orange-600 text-white text-sm rounded-lg font-medium transition-colors"
           >
-            🔀 Shuffle
+            Shuffle
           </button>
           <button
             onClick={addPlayer}
             disabled={state.players.length >= 7}
-            className="px-3 py-1.5 bg-green-700 hover:bg-green-600 text-white text-sm rounded-lg font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 bg-green-800 hover:bg-green-700 text-white text-sm rounded-lg font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             + Player
           </button>
-          <div className="ml-auto flex items-center gap-2">
-            <span className="text-green-500 text-xs">{state.numDecks} deck{state.numDecks > 1 ? 's' : ''}</span>
+
+          {/* Right: balance tracker + result buttons */}
+          <div className="ml-auto flex items-center gap-2 flex-wrap justify-end">
+            {/* Balance */}
+            <div className="flex items-center gap-1.5 bg-gray-800 rounded-lg px-3 py-1.5 border border-gray-700">
+              <span className="text-gray-400 text-xs">Balance</span>
+              <span className={`text-sm font-bold ${balance >= initialState.kellyConfig.bankroll ? 'text-green-400' : 'text-red-400'}`}>
+                ${balance.toLocaleString()}
+              </span>
+            </div>
+
+            {/* Result buttons */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => recordResult(1.5)}
+                title="Blackjack win (+1.5×)"
+                className="px-2 py-1.5 bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-bold rounded-lg transition-colors"
+              >
+                BJ
+              </button>
+              <button
+                onClick={() => recordResult(1)}
+                title="Win (+1×)"
+                className="px-2 py-1.5 bg-green-700 hover:bg-green-600 text-white text-xs font-bold rounded-lg transition-colors"
+              >
+                W
+              </button>
+              <button
+                onClick={() => recordResult(-1)}
+                title="Loss (−1×)"
+                className="px-2 py-1.5 bg-red-800 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors"
+              >
+                L
+              </button>
+              <button
+                onClick={() => recordResult(0)}
+                title="Push (no change)"
+                className="px-2 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs font-bold rounded-lg transition-colors"
+              >
+                P
+              </button>
+            </div>
+
             <button
               onClick={onReset}
-              className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm rounded-lg transition-colors border border-gray-700"
+              className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-400 text-sm rounded-lg transition-colors border border-gray-700"
             >
               ← Setup
             </button>
@@ -238,7 +289,7 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
       </div>
 
       {/* Main play area */}
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex-1 overflow-auto p-4 bg-gray-950">
         <div className="max-w-4xl mx-auto space-y-4">
           <DealerHand
             dealer={state.dealer}
@@ -277,6 +328,8 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
         canUndo={history.length > 0}
         activeLabel={getActiveLabel(state)}
       />
+
+      <CardDrawer numDecks={state.numDecks} shuffleSignal={shuffleSignal} />
     </div>
   );
 }

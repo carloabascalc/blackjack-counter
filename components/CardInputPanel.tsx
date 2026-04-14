@@ -35,11 +35,11 @@ export default function CardInputPanel({
   activeLabel,
 }: CardInputPanelProps) {
   return (
-    <div className="bg-green-900 border-t border-green-700 p-4">
+    <div className="bg-gray-900 border-t border-gray-800 p-4">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-green-400 text-sm">
-            Assigning to: <span className="text-yellow-400 font-bold">{activeLabel}</span>
+          <span className="text-gray-500 text-sm">
+            Assigning to: <span className="text-gray-200 font-semibold">{activeLabel}</span>
           </span>
           <button
             onClick={onUndo}
