@@ -72,9 +72,12 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
   const remaining = calcRemainingCards(state.totalCards, state.cardsDealt);
   const trueCount = casinoMode ? 0 : calcTrueCount(state.runningCount, remaining);
   const dealerUpCard: CardRank | null = state.dealer.hands[0]?.cards[0]?.rank ?? null;
-  const kellyBet = casinoMode
-    ? state.ruleSet.tableMin
-    : getKellyBet(trueCount, state.ruleSet, state.kellyConfig);
+
+  // Bet is frozen at the start of each round — only updates on New Round / Shuffle
+  const [kellyBet, setKellyBet] = useState(() =>
+    casinoMode ? state.ruleSet.tableMin : getKellyBet(trueCount, state.ruleSet, state.kellyConfig)
+  );
+  const [frozenTrueCount, setFrozenTrueCount] = useState(() => casinoMode ? 0 : trueCount);
 
   function recordResult(multiplier: number, type: 'win' | 'loss' | 'push' | 'bj') {
     const baseEdge = calcBaselineEdge(state.ruleSet);
@@ -172,6 +175,10 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
       next.activeHandId = firstPlayer?.hands[0]?.id ?? next.dealer.hands[0].id;
       return next;
     });
+    // Snapshot bet for the upcoming round based on current count
+    const nextBetTC = casinoMode ? 0 : trueCount;
+    setKellyBet(casinoMode ? state.ruleSet.tableMin : getKellyBet(trueCount, state.ruleSet, state.kellyConfig));
+    setFrozenTrueCount(nextBetTC);
     setHistory([]);
   }
 
@@ -190,6 +197,9 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
       next.activeHandId = firstPlayer?.hands[0]?.id ?? next.dealer.hands[0].id;
       return next;
     });
+    // After shuffle, count resets to 0 → always table min
+    setKellyBet(state.ruleSet.tableMin);
+    setFrozenTrueCount(0);
     setHistory([]);
     setShuffleSignal(s => s + 1);
   }
@@ -251,6 +261,8 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
         totalCards={state.totalCards}
         ruleSet={state.ruleSet}
         kellyConfig={state.kellyConfig}
+        kellyBet={kellyBet}
+        frozenTrueCount={frozenTrueCount}
         casinoMode={casinoMode}
       />
 
@@ -274,7 +286,12 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
 
           {/* Casino mode toggle */}
           <button
-            onClick={() => setCasinoMode(m => !m)}
+            onClick={() => {
+              const next = !casinoMode;
+              setCasinoMode(next);
+              setKellyBet(next ? state.ruleSet.tableMin : getKellyBet(trueCount, state.ruleSet, state.kellyConfig));
+              setFrozenTrueCount(next ? 0 : trueCount);
+            }}
             className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors border ${
               casinoMode
                 ? 'bg-blue-900 border-blue-600 text-blue-300'
@@ -309,6 +326,9 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
               <button onClick={() => recordResult(1, 'win')} className="px-2 py-1.5 bg-green-700 hover:bg-green-600 text-white text-xs font-bold rounded-lg transition-colors" title="Win (+1×)">W</button>
               <button onClick={() => recordResult(-1, 'loss')} className="px-2 py-1.5 bg-red-800 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors" title="Loss (−1×)">L</button>
               <button onClick={() => recordResult(0, 'push')} className="px-2 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs font-bold rounded-lg transition-colors" title="Push">P</button>
+              <div className="w-px h-5 bg-gray-700 mx-0.5" />
+              <button onClick={() => recordResult(2, 'win')} className="px-2 py-1.5 bg-green-900 hover:bg-green-800 text-green-300 text-xs font-bold rounded-lg transition-colors border border-green-700" title="Double Win (+2×)">DW</button>
+              <button onClick={() => recordResult(-2, 'loss')} className="px-2 py-1.5 bg-red-950 hover:bg-red-900 text-red-300 text-xs font-bold rounded-lg transition-colors border border-red-800" title="Double Loss (−2×)">DL</button>
             </div>
 
             <button onClick={onReset} className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-500 text-sm rounded-lg transition-colors border border-gray-700">
@@ -360,7 +380,7 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
         activeLabel={getActiveLabel(state)}
       />
 
-      <CardDrawer numDecks={state.numDecks} shuffleSignal={shuffleSignal} />
+      {!casinoMode && <CardDrawer numDecks={state.numDecks} shuffleSignal={shuffleSignal} />}
 
       {showStats && (
         <StatsPanel

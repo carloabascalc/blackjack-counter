@@ -1,6 +1,6 @@
 'use client';
 
-import { calcTrueCount, getBetAdvice, getCountColor, getKellyBet, calcBaselineEdge } from '@/lib/cardCounting';
+import { calcTrueCount, getBetAdvice, getCountColor, calcBaselineEdge } from '@/lib/cardCounting';
 import { RuleSet, KellyConfig } from '@/lib/types';
 
 interface CountDisplayProps {
@@ -9,18 +9,21 @@ interface CountDisplayProps {
   totalCards: number;
   ruleSet: RuleSet;
   kellyConfig: KellyConfig;
+  kellyBet: number;
+  frozenTrueCount: number;
   casinoMode: boolean;
 }
 
-export default function CountDisplay({ runningCount, cardsDealt, totalCards, ruleSet, kellyConfig, casinoMode }: CountDisplayProps) {
+export default function CountDisplay({ runningCount, cardsDealt, totalCards, ruleSet, kellyConfig, kellyBet, frozenTrueCount, casinoMode }: CountDisplayProps) {
   const remaining = Math.max(0, totalCards - cardsDealt);
   const trueCount = casinoMode ? 0 : calcTrueCount(runningCount, remaining);
-  const bet = getBetAdvice(trueCount, ruleSet);
-  const kellyBet = casinoMode ? ruleSet.tableMin : getKellyBet(trueCount, ruleSet, kellyConfig);
+  // Bet tile uses the frozen count so label/color/edge don't change mid-round
+  const bet = getBetAdvice(frozenTrueCount, ruleSet);
   const units = Math.round(kellyBet / ruleSet.tableMin);
   const countColor = getCountColor(trueCount);
   const penetration = totalCards > 0 ? (cardsDealt / totalCards) * 100 : 0;
   const baseEdge = calcBaselineEdge(ruleSet);
+  const underbankrolled = kellyConfig.bankroll < ruleSet.tableMin * 20;
 
   if (casinoMode) {
     return (
@@ -89,6 +92,12 @@ export default function CountDisplay({ runningCount, cardsDealt, totalCards, rul
             <div className={`text-xs mt-0.5 ${bet.color} opacity-60`}>{units}u · {bet.edge}</div>
           </div>
         </div>
+
+        {underbankrolled && (
+          <div className="mb-2 text-orange-400 text-xs font-semibold text-center bg-orange-950/60 rounded-lg py-1.5 border border-orange-900/60">
+            ⚠️ Low bankroll — spread limited. Recommended minimum: ${(ruleSet.tableMin * 20).toLocaleString()} MXN
+          </div>
+        )}
 
         <div className="flex items-center gap-2">
           <span className="text-gray-700 text-xs">{ruleSet.soft17} · {ruleSet.blackjackPayout}</span>
