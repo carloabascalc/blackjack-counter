@@ -50,27 +50,42 @@ const INDEX_PLAYS: IndexPlay[] = [
     condition: (t, s, p, d, tc) => t === 16 && !s && !p && d === '9' && tc >= 5,
     action: 'STAND',
   },
-  // 13 vs 2: stand at TC >= -1
-  {
-    condition: (t, s, p, d, tc) => t === 13 && !s && !p && d === '2' && tc >= -1,
-    action: 'STAND',
-  },
-  // 12 vs 2: stand at TC >= +3
+  // 12 vs 2: stand at TC >= +3 (basic: hit)
   {
     condition: (t, s, p, d, tc) => t === 12 && !s && !p && d === '2' && tc >= 3,
     action: 'STAND',
   },
-  // 12 vs 3: stand at TC >= +2
+  // 12 vs 3: stand at TC >= +2 (basic: hit)
   {
     condition: (t, s, p, d, tc) => t === 12 && !s && !p && d === '3' && tc >= 2,
     action: 'STAND',
   },
-  // 12 vs 4: stand at TC >= 0
+  // 12 vs 4: hit at TC < 0 (basic: stand — deviate at negative counts)
   {
-    condition: (t, s, p, d, tc) => t === 12 && !s && !p && d === '4' && tc >= 0,
-    action: 'STAND',
+    condition: (t, s, p, d, tc) => t === 12 && !s && !p && d === '4' && tc < 0,
+    action: 'HIT',
   },
-  // 11 vs A: double at TC >= +1
+  // 12 vs 5: hit at TC < -2 (basic: stand — deviate at very negative counts)
+  {
+    condition: (t, s, p, d, tc) => t === 12 && !s && !p && d === '5' && tc < -2,
+    action: 'HIT',
+  },
+  // 12 vs 6: hit at TC < -1 (basic: stand — deviate at negative counts)
+  {
+    condition: (t, s, p, d, tc) => t === 12 && !s && !p && d === '6' && tc < -1,
+    action: 'HIT',
+  },
+  // 13 vs 2: hit at TC < -1 (basic: stand — deviate at negative counts)
+  {
+    condition: (t, s, p, d, tc) => t === 13 && !s && !p && d === '2' && tc < -1,
+    action: 'HIT',
+  },
+  // 13 vs 3: hit at TC < -2 (basic: stand — deviate at very negative counts)
+  {
+    condition: (t, s, p, d, tc) => t === 13 && !s && !p && d === '3' && tc < -2,
+    action: 'HIT',
+  },
+  // 11 vs A: double at TC >= +1 (basic: hit for S17, double for H17)
   {
     condition: (t, s, p, d, tc) => t === 11 && !s && !p && d === 'A' && tc >= 1,
     action: 'DOUBLE',
@@ -89,11 +104,6 @@ const INDEX_PLAYS: IndexPlay[] = [
   {
     condition: (t, s, p, d, tc) => t === 19 && s && !p && d === '6' && tc >= -1,
     action: 'DOUBLE',
-  },
-  // 13 vs 3: stand at TC >= -2
-  {
-    condition: (t, s, p, d, tc) => t === 13 && !s && !p && d === '3' && tc >= -2,
-    action: 'STAND',
   },
 ];
 

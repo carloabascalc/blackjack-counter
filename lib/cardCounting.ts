@@ -33,46 +33,32 @@ export function calcBaselineEdge(rules: RuleSet): number {
   return edge;
 }
 
-// Bet spread multiplier based on true count and Kelly fraction.
-// Unit = tableMin. Fraction controls how aggressively the spread ramps.
-//
-// Full Kelly  — 1-8 spread (max aggression, fast ramp)
-// Half Kelly  — 1-5 spread (balanced, standard counter approach)
-// Quarter Kelly — 1-3 spread (conservative, lower variance)
-//
-// Pure Kelly formula (edge% × fraction × bankroll) requires a total AP
-// bankroll of $3k–$10k to produce bets above typical table minimums.
-// Unit-spread is what counters actually use at the table and correctly
-// scales the bet with the count regardless of session buy-in size.
-function getBetSpread(trueCount: number, fraction: 'full' | 'half' | 'quarter'): number {
-  if (fraction === 'full') {
-    if (trueCount < 1) return 1;
-    if (trueCount < 2) return 2;
-    if (trueCount < 3) return 4;
-    if (trueCount < 4) return 6;
-    return 8;
-  }
-  if (fraction === 'half') {
-    if (trueCount < 1) return 1;
-    if (trueCount < 2) return 1;
-    if (trueCount < 3) return 2;
-    if (trueCount < 4) return 3;
-    return 5;
-  }
-  // quarter
-  if (trueCount < 1) return 1;
-  if (trueCount < 2) return 1;
-  if (trueCount < 3) return 2;
-  return 3;
+// Bankroll percentage tiers based on effective edge.
+// At negative/zero edge, bet minimum (table presence, not value).
+// As edge grows, commit a larger slice of the session bankroll.
+function getBankrollPct(edgePct: number): number {
+  if (edgePct <= 0)   return 0.02;  // negative edge — min bet only
+  if (edgePct <= 0.5) return 0.03;  // TC ~+1: slight positive, cautious
+  if (edgePct <= 1.0) return 0.05;  // TC ~+2: meaningful edge
+  if (edgePct <= 1.5) return 0.08;  // TC ~+3: good edge
+  if (edgePct <= 2.0) return 0.12;  // TC ~+4: strong edge
+  return 0.16;                       // TC ~+5+: max edge
 }
 
-// Returns recommended bet in dollars: tableMin × spread multiplier, clamped to table limits.
+// Returns recommended bet scaled to session bankroll.
+// bet = bankroll × pct(edge) × fractionMultiplier, rounded to nearest increment,
+// clamped to [tableMin, tableMax].
 export function getKellyBet(trueCount: number, rules: RuleSet, kelly: KellyConfig): number {
   const baseEdge = calcBaselineEdge(rules);
   const edgePct = trueCount * 0.5 + baseEdge;
+  // At zero or negative edge there is no value in betting more than the minimum
   if (edgePct <= 0) return rules.tableMin;
-  const spread = getBetSpread(trueCount, kelly.fraction);
-  return Math.min(rules.tableMin * spread, rules.tableMax);
+  const fractionVal = kelly.fraction === 'full' ? 1.5 : kelly.fraction === 'half' ? 1.0 : 0.6;
+  const pct = getBankrollPct(edgePct) * fractionVal;
+  const raw = kelly.bankroll * pct;
+  const increment = Math.min(rules.tableMin, 50);
+  const rounded = Math.round(raw / increment) * increment;
+  return Math.min(Math.max(rounded, rules.tableMin), rules.tableMax);
 }
 
 // Minimum recommended bankroll for the configured table (100 units).
@@ -93,7 +79,7 @@ export function getBetAdvice(trueCount: number, rules?: RuleSet): {
   const edgePct = trueCount * 0.5 + baseEdge;
   const edgeStr = (edgePct >= 0 ? '+' : '') + edgePct.toFixed(2) + '%';
 
-  if (trueCount < 1)  return { label: 'SIT OUT / MIN', units: '1×', edge: edgeStr, color: 'text-red-400',    bgColor: 'bg-red-950/60' };
+  if (trueCount < 1)  return { label: 'BET MIN',       units: '1×', edge: edgeStr, color: 'text-red-400',    bgColor: 'bg-red-950/60' };
   if (trueCount < 2)  return { label: 'TABLE MIN',     units: '1×', edge: edgeStr, color: 'text-gray-400',   bgColor: 'bg-gray-800/60' };
   if (trueCount < 3)  return { label: 'RAISE BET',     units: '2×', edge: edgeStr, color: 'text-yellow-400', bgColor: 'bg-yellow-950/60' };
   if (trueCount < 4)  return { label: 'HIGH BET',      units: '4×', edge: edgeStr, color: 'text-orange-400', bgColor: 'bg-orange-950/60' };
