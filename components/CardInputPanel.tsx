@@ -55,7 +55,7 @@ export default function CardInputPanel({
             <button
               key={rank}
               onClick={() => onCardSelect(rank)}
-              className={`relative py-4 md:py-3 rounded-xl font-bold text-xl border-2 transition-all active:scale-95 touch-manipulation ${getRankColor(rank)}`}
+              className={`relative py-5 md:py-3 rounded-xl font-bold text-xl border-2 transition-all active:scale-95 touch-manipulation ${getRankColor(rank)}`}
             >
               {rank}
               <span className="absolute bottom-1 right-1 text-[9px] font-normal opacity-70">

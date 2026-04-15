@@ -64,29 +64,53 @@ export default function CountDisplay({ runningCount, cardsDealt, totalCards, rul
           </div>
         )}
 
-        <div className="grid grid-cols-4 gap-1.5 md:gap-2 mb-2 md:mb-3">
-          <div className="bg-gray-900 rounded-xl p-2 md:p-3 text-center border border-gray-800">
+        {/* Mobile: 4 flex boxes with larger numbers for quick glancing */}
+        <div className="flex gap-1.5 mb-2 md:hidden">
+          <div className="flex-1 bg-gray-900 rounded-xl p-2 text-center border border-gray-800">
+            <div className="text-gray-500 text-[10px] uppercase tracking-wider font-medium">RC</div>
+            <div className={`text-3xl font-bold leading-tight ${getCountColor(runningCount)}`}>
+              {runningCount > 0 ? `+${runningCount}` : runningCount}
+            </div>
+          </div>
+          <div className="flex-1 bg-gray-900 rounded-xl p-2 text-center border border-gray-800">
+            <div className="text-gray-500 text-[10px] uppercase tracking-wider font-medium">TC</div>
+            <div className={`text-3xl font-bold leading-tight ${countColor}`}>
+              {trueCount > 0 ? `+${trueCount.toFixed(1)}` : trueCount.toFixed(1)}
+            </div>
+          </div>
+          <div className={`flex-1 rounded-xl p-2 text-center border border-gray-700/50 ${bet.bgColor}`}>
+            <div className="text-gray-400 text-[10px] uppercase tracking-wider font-medium">Bet</div>
+            <div className={`text-3xl font-bold leading-tight ${bet.color}`}>${kellyBet}</div>
+            <div className={`text-[10px] mt-0.5 ${bet.color} opacity-60`}>{units}u</div>
+          </div>
+          <div className="flex-1 bg-gray-900 rounded-xl p-2 text-center border border-gray-800">
+            <div className="text-gray-500 text-[10px] uppercase tracking-wider font-medium">Left</div>
+            <div className="text-lg font-bold text-white leading-tight">{remaining}</div>
+            <div className="text-gray-600 text-[10px]">/{totalCards}</div>
+          </div>
+        </div>
+
+        {/* Desktop: original 4-column grid */}
+        <div className="hidden md:grid grid-cols-4 gap-2 mb-3">
+          <div className="bg-gray-900 rounded-xl p-3 text-center border border-gray-800">
             <div className="text-gray-500 text-xs uppercase tracking-wider mb-1 font-medium">Running</div>
             <div className={`text-2xl font-bold ${getCountColor(runningCount)}`}>
               {runningCount > 0 ? `+${runningCount}` : runningCount}
             </div>
           </div>
-
-          <div className="bg-gray-900 rounded-xl p-2 md:p-3 text-center border border-gray-800">
+          <div className="bg-gray-900 rounded-xl p-3 text-center border border-gray-800">
             <div className="text-gray-500 text-xs uppercase tracking-wider mb-1 font-medium">True</div>
             <div className={`text-2xl font-bold ${countColor}`}>
               {trueCount > 0 ? `+${trueCount.toFixed(1)}` : trueCount.toFixed(1)}
             </div>
           </div>
-
-          <div className="bg-gray-900 rounded-xl p-2 md:p-3 text-center border border-gray-800">
+          <div className="bg-gray-900 rounded-xl p-3 text-center border border-gray-800">
             <div className="text-gray-500 text-xs uppercase tracking-wider mb-1 font-medium">Cards</div>
             <div className="text-xl font-bold text-white">
               {remaining}<span className="text-sm text-gray-500">/{totalCards}</span>
             </div>
           </div>
-
-          <div className={`rounded-xl p-2 md:p-3 text-center border border-gray-700/50 ${bet.bgColor}`}>
+          <div className={`rounded-xl p-3 text-center border border-gray-700/50 ${bet.bgColor}`}>
             <div className="text-gray-400 text-xs uppercase tracking-wider mb-1 font-medium">Bet</div>
             <div className={`text-xl font-bold ${bet.color}`}>${kellyBet}</div>
             <div className={`text-xs mt-0.5 ${bet.color} opacity-60`}>{units}u · {bet.edge}</div>

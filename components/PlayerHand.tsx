@@ -121,62 +121,120 @@ export default function PlayerHand({
   const multiHand = player.hands.length > 1;
 
   return (
-    <div className={`relative rounded-xl p-3 transition-all border ${
+    <div className={`relative rounded-xl transition-all border ${
+      isYou ? 'p-3' : 'p-2 md:p-3'
+    } ${
       isActive
         ? isYou
           ? 'border-blue-500/60 bg-gray-900 shadow-lg shadow-blue-900/30'
           : 'border-yellow-500/50 bg-gray-900 shadow-lg shadow-yellow-900/20'
         : 'border-gray-800 bg-gray-900/50 hover:border-gray-700'
     }`}>
-      {/* Header row */}
-      <div className="flex items-center gap-1.5 mb-3">
-        <span className={`text-sm font-bold ${isYou ? 'text-blue-400' : 'text-gray-300'}`}>
-          {player.name}
-        </span>
-        {isYou && (
-          <span className="text-[10px] bg-blue-600 text-white px-1.5 py-0.5 rounded font-bold tracking-wide">YOU</span>
-        )}
-        {multiHand && (
-          <span className="text-xs text-purple-400 font-medium ml-1">{player.hands.length} hands</span>
-        )}
-
-        {!isYou && (
-          <button
-            onClick={e => { e.stopPropagation(); onSetYou(); }}
-            title="Set as my seat"
-            className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-gray-800 hover:bg-blue-800 text-gray-500 hover:text-blue-300 transition-colors border border-gray-700 hover:border-blue-700"
-          >
-            Me
-          </button>
-        )}
-
-        <div className="ml-auto">
-          <button
-            onClick={e => { e.stopPropagation(); onRemove(); }}
-            className="w-5 h-5 rounded-full bg-gray-800 hover:bg-red-900 text-gray-600 hover:text-red-300 text-xs flex items-center justify-center transition-colors"
-            title="Remove player"
-          >
-            ×
-          </button>
+      {/* Mobile compact view — non-you players only */}
+      {!isYou && (
+        <div className="md:hidden">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <span className="text-xs font-bold text-gray-400">{player.name}</span>
+            {multiHand && <span className="text-[10px] text-purple-400">{player.hands.length}×</span>}
+            <button
+              onClick={e => { e.stopPropagation(); onSetYou(); }}
+              className="text-[10px] px-1.5 py-0.5 rounded bg-gray-800 hover:bg-blue-800 text-gray-600 hover:text-blue-300 transition-colors border border-gray-700"
+            >
+              Me
+            </button>
+            <button
+              onClick={e => { e.stopPropagation(); onRemove(); }}
+              className="ml-auto w-4 h-4 rounded-full bg-gray-800 hover:bg-red-900 text-gray-600 hover:text-red-300 text-xs flex items-center justify-center transition-colors"
+            >
+              ×
+            </button>
+          </div>
+          {player.hands.map((hand, i) => {
+            const { total, isSoft, isBust } = calcHandValue(hand.cards);
+            const rec = getRecommendation(hand.cards, dealerUpCard, trueCount, ruleSet);
+            const isActiveHand = isActive && hand.id === activeHandId;
+            const canSplit = hand.cards.length === 2 && isPair(hand.cards);
+            return (
+              <div
+                key={hand.id}
+                onClick={() => onSelectHand(hand.id)}
+                className={`flex items-center justify-between px-2 py-1.5 rounded-lg cursor-pointer border mb-1 last:mb-0 touch-manipulation ${
+                  isActiveHand ? 'border-yellow-500/50 bg-gray-800/40' : 'border-gray-800/60'
+                }`}
+              >
+                <span className="text-gray-600 text-[10px]">{multiHand ? `H${i + 1}` : ''}</span>
+                <span className={`text-sm font-bold ${isBust ? 'text-red-400' : 'text-white'}`}>
+                  {hand.cards.length > 0 ? (isSoft && !isBust ? `s${total}` : isBust ? 'BUST' : String(total)) : '—'}
+                </span>
+                <div className="flex items-center gap-1">
+                  {canSplit && (
+                    <button
+                      onClick={e => { e.stopPropagation(); onSplit(hand.id); }}
+                      className="text-[10px] px-1.5 py-0.5 rounded bg-purple-800 text-purple-300 font-bold border border-purple-700"
+                    >
+                      Split
+                    </button>
+                  )}
+                  <ActionBadge action={rec} />
+                </div>
+              </div>
+            );
+          })}
         </div>
-      </div>
+      )}
 
-      {/* Hand(s) */}
-      <div className={multiHand ? 'space-y-2' : ''}>
-        {player.hands.map((hand, i) => (
-          <HandSection
-            key={hand.id}
-            hand={hand}
-            dealerUpCard={dealerUpCard}
-            trueCount={trueCount}
-            ruleSet={ruleSet}
-            isActiveHand={isActive && hand.id === activeHandId}
-            isYou={isYou}
-            handLabel={multiHand ? `Hand ${i + 1}` : 'Hand'}
-            onSelect={() => onSelectHand(hand.id)}
-            onSplit={() => onSplit(hand.id)}
-          />
-        ))}
+      {/* Full view — always for you, desktop for everyone else */}
+      <div className={!isYou ? 'hidden md:block' : ''}>
+        {/* Header row */}
+        <div className="flex items-center gap-1.5 mb-3">
+          <span className={`text-sm font-bold ${isYou ? 'text-blue-400' : 'text-gray-300'}`}>
+            {player.name}
+          </span>
+          {isYou && (
+            <span className="text-[10px] bg-blue-600 text-white px-1.5 py-0.5 rounded font-bold tracking-wide">YOU</span>
+          )}
+          {multiHand && (
+            <span className="text-xs text-purple-400 font-medium ml-1">{player.hands.length} hands</span>
+          )}
+
+          {!isYou && (
+            <button
+              onClick={e => { e.stopPropagation(); onSetYou(); }}
+              title="Set as my seat"
+              className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-gray-800 hover:bg-blue-800 text-gray-500 hover:text-blue-300 transition-colors border border-gray-700 hover:border-blue-700"
+            >
+              Me
+            </button>
+          )}
+
+          <div className="ml-auto">
+            <button
+              onClick={e => { e.stopPropagation(); onRemove(); }}
+              className="w-5 h-5 rounded-full bg-gray-800 hover:bg-red-900 text-gray-600 hover:text-red-300 text-xs flex items-center justify-center transition-colors"
+              title="Remove player"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        {/* Hand(s) */}
+        <div className={multiHand ? 'space-y-2' : ''}>
+          {player.hands.map((hand, i) => (
+            <HandSection
+              key={hand.id}
+              hand={hand}
+              dealerUpCard={dealerUpCard}
+              trueCount={trueCount}
+              ruleSet={ruleSet}
+              isActiveHand={isActive && hand.id === activeHandId}
+              isYou={isYou}
+              handLabel={multiHand ? `Hand ${i + 1}` : 'Hand'}
+              onSelect={() => onSelectHand(hand.id)}
+              onSplit={() => onSplit(hand.id)}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

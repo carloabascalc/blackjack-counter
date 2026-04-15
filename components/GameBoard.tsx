@@ -268,20 +268,20 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
 
       {/* Action bar */}
       <div className="bg-gray-900 border-b border-gray-800 px-3 md:px-4 py-2">
-        <div className="max-w-4xl mx-auto flex flex-col md:flex-row md:items-center gap-2">
+        <div className="max-w-4xl mx-auto flex flex-wrap md:flex-nowrap items-center gap-1.5 md:gap-2">
 
-          {/* Row 1: game controls */}
-          <div className="flex items-center gap-1.5 md:gap-2">
-            <button onClick={newRound} className="px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white text-sm rounded-lg font-medium transition-colors">
+          {/* Controls — w-full on mobile so balance/results wrap to own rows */}
+          <div className="w-full md:w-auto flex items-center gap-1.5 md:gap-2">
+            <button onClick={newRound} className="px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white text-sm rounded-lg font-medium transition-colors touch-manipulation">
               New Round
             </button>
-            <button onClick={shuffleDeck} className="px-3 py-1.5 bg-orange-700 hover:bg-orange-600 text-white text-sm rounded-lg font-medium transition-colors">
+            <button onClick={shuffleDeck} className="px-3 py-1.5 bg-orange-700 hover:bg-orange-600 text-white text-sm rounded-lg font-medium transition-colors touch-manipulation">
               Shuffle
             </button>
             <button
               onClick={addPlayer}
               disabled={state.players.length >= 7}
-              className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded-lg font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded-lg font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation"
             >
               + Player
             </button>
@@ -292,7 +292,7 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
                 setKellyBet(next ? state.ruleSet.tableMin : getKellyBet(trueCount, state.ruleSet, { ...state.kellyConfig, bankroll: balance }));
                 setFrozenTrueCount(next ? 0 : trueCount);
               }}
-              className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors border ${
+              className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors border touch-manipulation ${
                 casinoMode
                   ? 'bg-blue-900 border-blue-600 text-blue-300'
                   : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600'
@@ -300,47 +300,49 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
             >
               {casinoMode ? 'Casino' : 'Count'} Mode
             </button>
-            {/* Setup — mobile only, sits at end of row 1 */}
-            <button onClick={onReset} className="md:hidden ml-auto px-2.5 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-500 text-sm rounded-lg transition-colors border border-gray-700">
+            <button onClick={onReset} className="md:hidden ml-auto px-2.5 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-500 text-sm rounded-lg transition-colors border border-gray-700 touch-manipulation">
               ← Setup
             </button>
           </div>
 
-          {/* Row 2 on mobile / right side on desktop */}
-          <div className="flex items-center gap-1.5 md:gap-2 md:ml-auto">
-            {/* Balance */}
-            <button
-              onClick={() => setShowStats(true)}
-              className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 rounded-lg px-3 py-1.5 border border-gray-700 transition-colors"
-            >
-              <span className="text-gray-500 text-xs">Balance</span>
-              <span className={`text-sm font-bold ${pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                ${balance.toLocaleString()}
+          {/* Balance — full-width row on mobile, inline on desktop */}
+          <button
+            onClick={() => setShowStats(true)}
+            className="w-full md:w-auto md:ml-auto flex items-center justify-between md:justify-start gap-2 bg-gray-800 hover:bg-gray-700 rounded-lg px-3 py-2 md:py-1.5 border border-gray-700 transition-colors touch-manipulation"
+          >
+            <span className="text-gray-500 text-xs">Balance</span>
+            <span className={`text-base md:text-sm font-bold ${pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              ${balance.toLocaleString()} <span className="text-gray-600 text-xs font-normal">MXN</span>
+            </span>
+            {sessionStats.hands > 0 && (
+              <span className={`text-sm md:text-xs font-semibold ${pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {pnl >= 0 ? '+' : ''}${pnl.toLocaleString()}
               </span>
-              <span className="text-gray-600 text-xs">MXN</span>
-              {sessionStats.hands > 0 && (
-                <span className={`text-xs ${pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  ({pnl >= 0 ? '+' : ''}${pnl.toLocaleString()})
-                </span>
-              )}
-            </button>
+            )}
+          </button>
 
-            {/* Result buttons — taller on mobile for easier tapping */}
-            <div className="flex items-center gap-1">
-              <button onClick={() => recordResult(1.5, 'bj')} className="px-2 py-2.5 md:py-1.5 bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-bold rounded-lg transition-colors touch-manipulation" title="Blackjack (+1.5×)">BJ</button>
-              <button onClick={() => recordResult(1, 'win')} className="px-2 py-2.5 md:py-1.5 bg-green-700 hover:bg-green-600 text-white text-xs font-bold rounded-lg transition-colors touch-manipulation" title="Win (+1×)">W</button>
-              <button onClick={() => recordResult(-1, 'loss')} className="px-2 py-2.5 md:py-1.5 bg-red-800 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors touch-manipulation" title="Loss (−1×)">L</button>
-              <button onClick={() => recordResult(0, 'push')} className="px-2 py-2.5 md:py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs font-bold rounded-lg transition-colors touch-manipulation" title="Push">P</button>
-              <div className="w-px h-5 bg-gray-700 mx-0.5" />
-              <button onClick={() => recordResult(2, 'win')} className="px-2 py-2.5 md:py-1.5 bg-green-900 hover:bg-green-800 text-green-300 text-xs font-bold rounded-lg transition-colors border border-green-700 touch-manipulation" title="Double Win (+2×)">DW</button>
-              <button onClick={() => recordResult(-2, 'loss')} className="px-2 py-2.5 md:py-1.5 bg-red-950 hover:bg-red-900 text-red-300 text-xs font-bold rounded-lg transition-colors border border-red-800 touch-manipulation" title="Double Loss (−2×)">DL</button>
-            </div>
-
-            {/* Setup — desktop only */}
-            <button onClick={onReset} className="hidden md:block px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-500 text-sm rounded-lg transition-colors border border-gray-700">
-              ← Setup
-            </button>
+          {/* Result buttons — full-width grid on mobile, inline flex on desktop */}
+          <div className="w-full grid grid-cols-6 gap-1.5 md:hidden">
+            <button onClick={() => recordResult(1.5, 'bj')} className="py-3.5 bg-yellow-600 hover:bg-yellow-500 text-white text-sm font-bold rounded-lg transition-colors touch-manipulation">BJ</button>
+            <button onClick={() => recordResult(1, 'win')} className="py-3.5 bg-green-700 hover:bg-green-600 text-white text-sm font-bold rounded-lg transition-colors touch-manipulation">W</button>
+            <button onClick={() => recordResult(-1, 'loss')} className="py-3.5 bg-red-800 hover:bg-red-700 text-white text-sm font-bold rounded-lg transition-colors touch-manipulation">L</button>
+            <button onClick={() => recordResult(0, 'push')} className="py-3.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm font-bold rounded-lg transition-colors touch-manipulation">P</button>
+            <button onClick={() => recordResult(2, 'win')} className="py-3.5 bg-green-900 hover:bg-green-800 text-green-300 text-sm font-bold rounded-lg transition-colors border border-green-700 touch-manipulation">DW</button>
+            <button onClick={() => recordResult(-2, 'loss')} className="py-3.5 bg-red-950 hover:bg-red-900 text-red-300 text-sm font-bold rounded-lg transition-colors border border-red-800 touch-manipulation">DL</button>
           </div>
+          <div className="hidden md:flex items-center gap-1">
+            <button onClick={() => recordResult(1.5, 'bj')} className="px-2 py-1.5 bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-bold rounded-lg transition-colors" title="Blackjack (+1.5×)">BJ</button>
+            <button onClick={() => recordResult(1, 'win')} className="px-2 py-1.5 bg-green-700 hover:bg-green-600 text-white text-xs font-bold rounded-lg transition-colors" title="Win (+1×)">W</button>
+            <button onClick={() => recordResult(-1, 'loss')} className="px-2 py-1.5 bg-red-800 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors" title="Loss (−1×)">L</button>
+            <button onClick={() => recordResult(0, 'push')} className="px-2 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs font-bold rounded-lg transition-colors" title="Push">P</button>
+            <div className="w-px h-5 bg-gray-700 mx-0.5" />
+            <button onClick={() => recordResult(2, 'win')} className="px-2 py-1.5 bg-green-900 hover:bg-green-800 text-green-300 text-xs font-bold rounded-lg transition-colors border border-green-700" title="Double Win (+2×)">DW</button>
+            <button onClick={() => recordResult(-2, 'loss')} className="px-2 py-1.5 bg-red-950 hover:bg-red-900 text-red-300 text-xs font-bold rounded-lg transition-colors border border-red-800" title="Double Loss (−2×)">DL</button>
+          </div>
+
+          <button onClick={onReset} className="hidden md:block px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-500 text-sm rounded-lg transition-colors border border-gray-700">
+            ← Setup
+          </button>
 
         </div>
       </div>
