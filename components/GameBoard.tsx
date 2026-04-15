@@ -175,9 +175,9 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
       next.activeHandId = firstPlayer?.hands[0]?.id ?? next.dealer.hands[0].id;
       return next;
     });
-    // Snapshot bet for the upcoming round based on current count
+    // Snapshot bet for the upcoming round based on current count + current balance
     const nextBetTC = casinoMode ? 0 : trueCount;
-    setKellyBet(casinoMode ? state.ruleSet.tableMin : getKellyBet(trueCount, state.ruleSet, state.kellyConfig));
+    setKellyBet(casinoMode ? state.ruleSet.tableMin : getKellyBet(trueCount, state.ruleSet, { ...state.kellyConfig, bankroll: balance }));
     setFrozenTrueCount(nextBetTC);
     setHistory([]);
   }
@@ -197,8 +197,8 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
       next.activeHandId = firstPlayer?.hands[0]?.id ?? next.dealer.hands[0].id;
       return next;
     });
-    // After shuffle, count resets to 0 → always table min
-    setKellyBet(state.ruleSet.tableMin);
+    // After shuffle, count resets to 0 → always table min (negative edge)
+    setKellyBet(getKellyBet(0, state.ruleSet, { ...state.kellyConfig, bankroll: balance }));
     setFrozenTrueCount(0);
     setHistory([]);
     setShuffleSignal(s => s + 1);
@@ -289,7 +289,7 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
               onClick={() => {
                 const next = !casinoMode;
                 setCasinoMode(next);
-                setKellyBet(next ? state.ruleSet.tableMin : getKellyBet(trueCount, state.ruleSet, state.kellyConfig));
+                setKellyBet(next ? state.ruleSet.tableMin : getKellyBet(trueCount, state.ruleSet, { ...state.kellyConfig, bankroll: balance }));
                 setFrozenTrueCount(next ? 0 : trueCount);
               }}
               className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors border ${
