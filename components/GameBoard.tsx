@@ -267,42 +267,47 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
       />
 
       {/* Action bar */}
-      <div className="bg-gray-900 border-b border-gray-800 px-4 py-2">
-        <div className="max-w-4xl mx-auto flex items-center gap-2 flex-wrap">
-          {/* Game controls */}
-          <button onClick={newRound} className="px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white text-sm rounded-lg font-medium transition-colors">
-            New Round
-          </button>
-          <button onClick={shuffleDeck} className="px-3 py-1.5 bg-orange-700 hover:bg-orange-600 text-white text-sm rounded-lg font-medium transition-colors">
-            Shuffle
-          </button>
-          <button
-            onClick={addPlayer}
-            disabled={state.players.length >= 7}
-            className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded-lg font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            + Player
-          </button>
+      <div className="bg-gray-900 border-b border-gray-800 px-3 md:px-4 py-2">
+        <div className="max-w-4xl mx-auto flex flex-col md:flex-row md:items-center gap-2">
 
-          {/* Casino mode toggle */}
-          <button
-            onClick={() => {
-              const next = !casinoMode;
-              setCasinoMode(next);
-              setKellyBet(next ? state.ruleSet.tableMin : getKellyBet(trueCount, state.ruleSet, state.kellyConfig));
-              setFrozenTrueCount(next ? 0 : trueCount);
-            }}
-            className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors border ${
-              casinoMode
-                ? 'bg-blue-900 border-blue-600 text-blue-300'
-                : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600'
-            }`}
-          >
-            {casinoMode ? 'Casino' : 'Count'} Mode
-          </button>
+          {/* Row 1: game controls */}
+          <div className="flex items-center gap-1.5 md:gap-2">
+            <button onClick={newRound} className="px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white text-sm rounded-lg font-medium transition-colors">
+              New Round
+            </button>
+            <button onClick={shuffleDeck} className="px-3 py-1.5 bg-orange-700 hover:bg-orange-600 text-white text-sm rounded-lg font-medium transition-colors">
+              Shuffle
+            </button>
+            <button
+              onClick={addPlayer}
+              disabled={state.players.length >= 7}
+              className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded-lg font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              + Player
+            </button>
+            <button
+              onClick={() => {
+                const next = !casinoMode;
+                setCasinoMode(next);
+                setKellyBet(next ? state.ruleSet.tableMin : getKellyBet(trueCount, state.ruleSet, state.kellyConfig));
+                setFrozenTrueCount(next ? 0 : trueCount);
+              }}
+              className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors border ${
+                casinoMode
+                  ? 'bg-blue-900 border-blue-600 text-blue-300'
+                  : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600'
+              }`}
+            >
+              {casinoMode ? 'Casino' : 'Count'} Mode
+            </button>
+            {/* Setup — mobile only, sits at end of row 1 */}
+            <button onClick={onReset} className="md:hidden ml-auto px-2.5 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-500 text-sm rounded-lg transition-colors border border-gray-700">
+              ← Setup
+            </button>
+          </div>
 
-          {/* Right side */}
-          <div className="ml-auto flex items-center gap-2 flex-wrap justify-end">
+          {/* Row 2 on mobile / right side on desktop */}
+          <div className="flex items-center gap-1.5 md:gap-2 md:ml-auto">
             {/* Balance */}
             <button
               onClick={() => setShowStats(true)}
@@ -320,21 +325,23 @@ export default function GameBoard({ initialState, onReset }: GameBoardProps) {
               )}
             </button>
 
-            {/* Result buttons */}
+            {/* Result buttons — taller on mobile for easier tapping */}
             <div className="flex items-center gap-1">
-              <button onClick={() => recordResult(1.5, 'bj')} className="px-2 py-1.5 bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-bold rounded-lg transition-colors" title="Blackjack (+1.5×)">BJ</button>
-              <button onClick={() => recordResult(1, 'win')} className="px-2 py-1.5 bg-green-700 hover:bg-green-600 text-white text-xs font-bold rounded-lg transition-colors" title="Win (+1×)">W</button>
-              <button onClick={() => recordResult(-1, 'loss')} className="px-2 py-1.5 bg-red-800 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors" title="Loss (−1×)">L</button>
-              <button onClick={() => recordResult(0, 'push')} className="px-2 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs font-bold rounded-lg transition-colors" title="Push">P</button>
+              <button onClick={() => recordResult(1.5, 'bj')} className="px-2 py-2.5 md:py-1.5 bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-bold rounded-lg transition-colors touch-manipulation" title="Blackjack (+1.5×)">BJ</button>
+              <button onClick={() => recordResult(1, 'win')} className="px-2 py-2.5 md:py-1.5 bg-green-700 hover:bg-green-600 text-white text-xs font-bold rounded-lg transition-colors touch-manipulation" title="Win (+1×)">W</button>
+              <button onClick={() => recordResult(-1, 'loss')} className="px-2 py-2.5 md:py-1.5 bg-red-800 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors touch-manipulation" title="Loss (−1×)">L</button>
+              <button onClick={() => recordResult(0, 'push')} className="px-2 py-2.5 md:py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs font-bold rounded-lg transition-colors touch-manipulation" title="Push">P</button>
               <div className="w-px h-5 bg-gray-700 mx-0.5" />
-              <button onClick={() => recordResult(2, 'win')} className="px-2 py-1.5 bg-green-900 hover:bg-green-800 text-green-300 text-xs font-bold rounded-lg transition-colors border border-green-700" title="Double Win (+2×)">DW</button>
-              <button onClick={() => recordResult(-2, 'loss')} className="px-2 py-1.5 bg-red-950 hover:bg-red-900 text-red-300 text-xs font-bold rounded-lg transition-colors border border-red-800" title="Double Loss (−2×)">DL</button>
+              <button onClick={() => recordResult(2, 'win')} className="px-2 py-2.5 md:py-1.5 bg-green-900 hover:bg-green-800 text-green-300 text-xs font-bold rounded-lg transition-colors border border-green-700 touch-manipulation" title="Double Win (+2×)">DW</button>
+              <button onClick={() => recordResult(-2, 'loss')} className="px-2 py-2.5 md:py-1.5 bg-red-950 hover:bg-red-900 text-red-300 text-xs font-bold rounded-lg transition-colors border border-red-800 touch-manipulation" title="Double Loss (−2×)">DL</button>
             </div>
 
-            <button onClick={onReset} className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-500 text-sm rounded-lg transition-colors border border-gray-700">
+            {/* Setup — desktop only */}
+            <button onClick={onReset} className="hidden md:block px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-500 text-sm rounded-lg transition-colors border border-gray-700">
               ← Setup
             </button>
           </div>
+
         </div>
       </div>
 

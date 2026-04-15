@@ -64,29 +64,29 @@ export default function CountDisplay({ runningCount, cardsDealt, totalCards, rul
           </div>
         )}
 
-        <div className="grid grid-cols-4 gap-2 mb-3">
-          <div className="bg-gray-900 rounded-xl p-3 text-center border border-gray-800">
+        <div className="grid grid-cols-4 gap-1.5 md:gap-2 mb-2 md:mb-3">
+          <div className="bg-gray-900 rounded-xl p-2 md:p-3 text-center border border-gray-800">
             <div className="text-gray-500 text-xs uppercase tracking-wider mb-1 font-medium">Running</div>
             <div className={`text-2xl font-bold ${getCountColor(runningCount)}`}>
               {runningCount > 0 ? `+${runningCount}` : runningCount}
             </div>
           </div>
 
-          <div className="bg-gray-900 rounded-xl p-3 text-center border border-gray-800">
+          <div className="bg-gray-900 rounded-xl p-2 md:p-3 text-center border border-gray-800">
             <div className="text-gray-500 text-xs uppercase tracking-wider mb-1 font-medium">True</div>
             <div className={`text-2xl font-bold ${countColor}`}>
               {trueCount > 0 ? `+${trueCount.toFixed(1)}` : trueCount.toFixed(1)}
             </div>
           </div>
 
-          <div className="bg-gray-900 rounded-xl p-3 text-center border border-gray-800">
+          <div className="bg-gray-900 rounded-xl p-2 md:p-3 text-center border border-gray-800">
             <div className="text-gray-500 text-xs uppercase tracking-wider mb-1 font-medium">Cards</div>
             <div className="text-xl font-bold text-white">
               {remaining}<span className="text-sm text-gray-500">/{totalCards}</span>
             </div>
           </div>
 
-          <div className={`rounded-xl p-3 text-center border border-gray-700/50 ${bet.bgColor}`}>
+          <div className={`rounded-xl p-2 md:p-3 text-center border border-gray-700/50 ${bet.bgColor}`}>
             <div className="text-gray-400 text-xs uppercase tracking-wider mb-1 font-medium">Bet</div>
             <div className={`text-xl font-bold ${bet.color}`}>${kellyBet}</div>
             <div className={`text-xs mt-0.5 ${bet.color} opacity-60`}>{units}u · {bet.edge}</div>
